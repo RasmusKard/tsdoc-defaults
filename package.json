@@ -33,7 +33,7 @@
     "docs": "npm run build && node dist/cli.js example/options.ts --check && typedoc --options example/typedoc.json && cp example/index.html site/index.html"
   },
   "dependencies": {
-    "typescript": "^6.0.0"
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "typedoc": "^0.28.0"
