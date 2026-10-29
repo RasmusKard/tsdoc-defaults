@@ -4,4 +4,4 @@ test/fixtures
 package-lock.json
 .claude
 site
-.release-please-manifest.json
+.github/.release-please-manifest.json
