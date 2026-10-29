@@ -1,4 +1,6 @@
 export interface Opts {
+  /** @default `1` */
+  [Symbol.iterator]?: number;
   nested?: {
     /** @default `1` */
     inner?: number;
@@ -23,5 +25,3 @@ export class Klass {
 /** @default 1 */
 export const bare = 1;
 
-/** @default one, unless overridden */
-export const h = 1;

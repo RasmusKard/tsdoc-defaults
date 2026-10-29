@@ -1,4 +1,3 @@
-// Finds default tags: which members carry one, what form the tag takes, and which tags sit where they are not handled.
 import ts from 'typescript';
 
 // Markdown code span: a run of backticks, content without that run, one padding space each side stripped.

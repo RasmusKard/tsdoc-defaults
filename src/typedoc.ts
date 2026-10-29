@@ -1,5 +1,3 @@
-// TypeDoc 0.28 plugin: a `@default`/`@defaultValue` tag whose content is one expression becomes the
-// property's `defaultValue`, so it renders in the signature row (`timeoutMs?: number = 10_000`).
 import { type Application, Comment, Converter, ReflectionKind } from 'typedoc';
 
 import { KNOWN_GLOBALS, parseDefault } from './expressions.js';
@@ -17,7 +15,6 @@ export function defaultExpression(text: string): string | undefined {
   const tag = classifyTag(text);
   const parsed = parseDefault(
     tag.form === 'code' ? tag : { form: 'bare', text: tag.text },
-    // The plugin has no file scope: a bare expression is code only when every name it reads is a language global.
     KNOWN_GLOBALS,
   );
   return parsed.kind === 'code' ? parsed.expression : undefined;

@@ -9,6 +9,4 @@ export interface Opts {
    * ```
    */
   fence?: number;
-  /** @default a or b */
-  prose?: string;
 }
