@@ -209,7 +209,6 @@ export const formatError = (e: ExtractError) =>
 export const outputPath = (source: string) =>
   source.replace(/(\.d)?\.([cm]?)tsx?$|$/, '.defaults.$2ts');
 
-/** How the generated module imports its source. */
 function sourceSpecifier(source: string, importExt = ''): string {
   const [ext, flavour] = /\.([cm]?)tsx?$/.exec(source) ?? [''];
   // `./x` never resolves to `x.mts`; a module-flavoured source needs its runtime extension.

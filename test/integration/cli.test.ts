@@ -64,6 +64,24 @@ export const DEFAULTS: {
 };
 `;
 
+const tsc = (dir: string, ...files: string[]) =>
+  run(
+    'tsc',
+    [
+      '--noEmit',
+      '--strict',
+      '--module',
+      'preserve',
+      '--moduleResolution',
+      'bundler',
+      ...files,
+    ],
+    dir,
+  );
+
+const checkBasic = () =>
+  cli('--check', '-p', 'test/fixtures/tsconfig.json', 'test/fixtures/basic.ts');
+
 const generateFixtures = () =>
   assert.equal(
     cli(
@@ -75,8 +93,6 @@ const generateFixtures = () =>
     0,
   );
 
-// basic.ts covers the bare tag (`Theme.fontSize`, generated) and the prose tag (`Theme.accent`, skipped);
-// imports.ts covers a copied import (`Foo`) and an import directive (`Platform`).
 void test('generates the expected modules', () => {
   generateFixtures();
   assert.equal(
@@ -117,19 +133,7 @@ void test('the type annotation rejects a default of the wrong type', () => {
     "export interface Opts {\n  /** @default `'ten'` */\n  timeoutMs?: number;\n}\n",
   );
   assert.equal(cli(path.join(dir, 'wrong.ts')).code, 0);
-  const r = run(
-    'tsc',
-    [
-      '--noEmit',
-      '--strict',
-      '--module',
-      'preserve',
-      '--moduleResolution',
-      'bundler',
-      'wrong.defaults.ts',
-    ],
-    dir,
-  );
+  const r = tsc(dir, 'wrong.defaults.ts');
   assert.notEqual(r.code, 0);
   assert.match(
     r.out,
@@ -149,21 +153,6 @@ void test('errors are reported as file:line:col with exit code 1, and nothing is
     false,
   );
 });
-
-const tsc = (dir: string, ...files: string[]) =>
-  run(
-    'tsc',
-    [
-      '--noEmit',
-      '--strict',
-      '--module',
-      'preserve',
-      '--moduleResolution',
-      'bundler',
-      ...files,
-    ],
-    dir,
-  );
 
 void test('a leftover file for a source without defaults is stale, and generation removes it', () => {
   const dir = tmp();
@@ -213,15 +202,7 @@ void test('a trailing line comment, a numeric key and a multi-line template lite
 void test('--check passes when fresh, ignores formatting, fails when stale or missing', () => {
   generateFixtures();
   const file = path.join(fx, 'basic.defaults.ts');
-  assert.equal(
-    cli(
-      '--check',
-      '-p',
-      'test/fixtures/tsconfig.json',
-      'test/fixtures/basic.ts',
-    ).code,
-    0,
-  );
+  assert.equal(checkBasic().code, 0);
   try {
     fs.writeFileSync(
       file,
@@ -230,34 +211,13 @@ void test('--check passes when fresh, ignores formatting, fails when stale or mi
         '// edited',
       ),
     );
-    assert.equal(
-      cli(
-        '--check',
-        '-p',
-        'test/fixtures/tsconfig.json',
-        'test/fixtures/basic.ts',
-      ).code,
-      0,
-    );
+    assert.equal(checkBasic().code, 0);
     fs.writeFileSync(file, BASIC.replace('10_000', '20_000'));
-    const r = cli(
-      '--check',
-      '-p',
-      'test/fixtures/tsconfig.json',
-      'test/fixtures/basic.ts',
-    );
+    const r = checkBasic();
     assert.equal(r.code, 1);
     assert.match(r.out, /basic\.defaults\.ts is stale: run tsdoc-defaults/);
     fs.rmSync(file);
-    assert.equal(
-      cli(
-        '--check',
-        '-p',
-        'test/fixtures/tsconfig.json',
-        'test/fixtures/basic.ts',
-      ).code,
-      1,
-    );
+    assert.equal(checkBasic().code, 1);
   } finally {
     generateFixtures();
   }

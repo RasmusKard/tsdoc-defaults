@@ -1,4 +1,3 @@
-// Parses a tag's expression and resolves the names it reads against the source file's imports, directives and locals.
 import ts from 'typescript';
 import type { ClassifiedTag } from './tags.js';
 

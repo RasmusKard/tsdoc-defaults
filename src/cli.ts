@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// Exit codes: 0 ok, 1 errors or stale files, 2 usage.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -19,7 +18,6 @@ function parse(argv: string[]) {
   try {
     return parseArgs({ args: argv, options: OPTIONS, allowPositionals: true });
   } catch (e) {
-    // An unknown option or a missing value is a usage error: print it and exit 2.
     console.error(`${(e as Error).message}\n${USAGE}`);
     return undefined;
   }
@@ -72,7 +70,6 @@ function main(argv: string[]): number {
   return result.stale.length ? 1 : 0;
 }
 
-/** `project`, else the working directory's tsconfig.json, as tsc resolves it (`extends`, `include`, `exclude`); undefined when neither is given or exists. */
 function readConfig(project?: string) {
   if (!project && !fs.existsSync(CONFIG)) return undefined;
   const configPath = project ?? CONFIG;

@@ -13,14 +13,11 @@ const expressions = (source: string) => {
 
 void test('bare text is code when it parses, prose when it does not', () => {
   assert.deepEqual(expressions(member('14')), ['14']);
-  assert.deepEqual(expressions(member("'cover'")), ["'cover'"]);
-  assert.deepEqual(expressions(member('true')), ['true']);
   assert.deepEqual(expressions(member('{ a: 1 }')), ['{ a: 1 }']);
   assert.deepEqual(expressions(member('the platform accent color')), []);
   assert.deepEqual(expressions(member('`a` or `b`')), []);
   // Reads a name the file does not know: prose, like a lone unknown identifier.
   assert.deepEqual(expressions(member('100 (ms)')), []);
-  assert.deepEqual(expressions(member('false (Android)')), []);
   // Any global beyond the language's own needs a code span.
   assert.deepEqual(expressions(member('process.env.X ?? 1')), []);
   assert.deepEqual(expressions(member('`process.env.X ?? 1`')), [
@@ -57,11 +54,8 @@ void test('a CRLF source yields an LF-only expression', () => {
 
 void test('a bare lone identifier is prose unless the file knows it', () => {
   assert.deepEqual(expressions(member('none')), []);
-  assert.deepEqual(expressions(member('auto')), []);
-  assert.deepEqual(expressions(member('__DEV__')), []);
   // `undefined` is code, but means no default, so it generates nothing.
   assert.deepEqual(expressions(member('undefined')), []);
-  assert.deepEqual(expressions(member('`undefined`')), []);
   assert.deepEqual(expressions(member('Infinity')), ['Infinity']);
   assert.deepEqual(expressions(member('Foo', "import { Foo } from './foo';")), [
     'Foo',

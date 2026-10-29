@@ -1,4 +1,3 @@
-// Renders the `.defaults.ts` module text: deterministic, 2-space indent, `\n`, source order, quoted names kept.
 import ts from 'typescript';
 import { parseExpression } from './expressions.js';
 import type { ExtractResult } from './index.js';
