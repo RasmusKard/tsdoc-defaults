@@ -1,0 +1,53 @@
+{
+  "name": "tsdoc-defaults",
+  "version": "0.1.0",
+  "description": "Generate typed runtime defaults from @default/@defaultValue TSDoc tags",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RasmusKard/tsdoc-defaults.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./typedoc": "./dist/typedoc.js"
+  },
+  "bin": {
+    "tsdoc-defaults": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "tsx --test \"test/**/*.test.ts\"",
+    "lint": "eslint . && prettier --check .",
+    "typecheck": "tsc",
+    "check": "npm run lint && npm run typecheck && npm run test",
+    "prepublishOnly": "npm run check && npm run build"
+  },
+  "dependencies": {
+    "typescript": "^6.0.0"
+  },
+  "peerDependencies": {
+    "typedoc": "^0.28.0"
+  },
+  "peerDependenciesMeta": {
+    "typedoc": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typedoc": "^0.28.20",
+    "typescript-eslint": "^8.72.1"
+  }
+}
