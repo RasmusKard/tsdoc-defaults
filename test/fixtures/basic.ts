@@ -1,18 +1,31 @@
 export interface BridgeOptions {
-  /**
-   * How long to wait for the native side, in milliseconds.
-   * @default `10_000`
-   */
+  /** @default `10_000 // ten seconds` */
   timeoutMs?: number;
   /** @defaultValue `'cover'` */
   fit?: 'cover' | 'contain';
   /** @default `{ customUserAgent: null, inspectable: __DEV__ }` */
   webView?: { customUserAgent?: string | null; inspectable?: boolean };
-  /** @default `__DEV__ ? 'debug' : 'warn'` */
-  logLevel?: 'debug' | 'warn';
   /** @default `true` */
   'data-enabled'?: boolean;
-  /** Not tagged, so not in DEFAULTS. */
+  /** @default `2` */
+  0?: number;
+  /**
+   * @defaultValue
+   * ```ts
+   * // two lines
+   * `line1
+   *   line2`
+   * ```
+   */
+  banner?: string;
+  /** @default `` `${'a'}b` `` */
+  label?: string;
+  /** @default 3 */
+  retries?: number;
+  /** @default undefined */
+  agent?: string;
+  /** @default the platform accent color */
+  accent?: string;
   name?: string;
 }
 
@@ -22,10 +35,16 @@ export interface IOSOptions extends BridgeOptions {
 }
 
 export type Theme = {
-  /** @default `'light'` */
-  mode?: 'light' | 'dark';
-  /** @default 14 */
-  fontSize?: number;
-  /** @default the platform accent color */
-  accent?: string;
+  /** @default { dark: false } */
+  palette?: { dark: boolean };
+  /** @default none */
+  border?: string;
+  /** @default `start` or `end` */
+  align?: 'start' | 'end';
 };
+
+interface Listed {
+  /** @default `1` */
+  x?: number;
+}
+export type { Listed };
