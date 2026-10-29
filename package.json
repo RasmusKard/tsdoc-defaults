@@ -2,6 +2,19 @@
   "name": "tsdoc-defaults",
   "version": "0.1.0",
   "description": "Generate typed runtime defaults from @default/@defaultValue TSDoc tags",
+  "keywords": [
+    "typescript",
+    "tsdoc",
+    "jsdoc",
+    "typedoc",
+    "typedoc-plugin",
+    "defaults",
+    "default-values",
+    "codegen",
+    "code-generation",
+    "documentation",
+    "cli"
+  ],
   "license": "MIT",
   "type": "module",
   "repository": {
