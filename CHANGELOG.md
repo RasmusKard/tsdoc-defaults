@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/RasmusKard/tsdoc-defaults/compare/v0.1.0...v0.1.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* Avoid polynomial backtracking in inline code span detection ([#13](https://github.com/RasmusKard/tsdoc-defaults/issues/13)) ([5574446](https://github.com/RasmusKard/tsdoc-defaults/commit/5574446cc9b68e95e39316afc12b077c0e02f127))
+
 ## 0.1.0 (2026-10-29)
 
 
