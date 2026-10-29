@@ -47,6 +47,8 @@ const timeoutMs = opts.timeoutMs
 
 The [TypeDoc plugin](#typedoc) also puts the default in the signature.
 
+**[Demo: a source, its generated file and the rendered docs](https://rasmuskard.github.io/tsdoc-defaults/)**
+
 ## Install
 
 ```sh
@@ -129,6 +131,8 @@ Requires `typedoc@^0.28` (optional peer dependency).
 - A default that is one expression renders in the signature: `timeoutMs?: number = 10_000`.
 - Prose stays a "Default" block.
 - So does bare text that reads an imported name (`@default DEFAULT_TIMEOUT`). Write it as a code span to get it in the signature.
+
+**[Demo](https://rasmuskard.github.io/tsdoc-defaults/)**
 
 ## Limits
 

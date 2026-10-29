@@ -1,0 +1,8 @@
+{
+  "entryPoints": ["options.ts"],
+  "tsconfig": "../tsconfig.json",
+  "plugin": ["../dist/typedoc.js"],
+  "out": "../site",
+  "name": "tsdoc-defaults demo",
+  "readme": "none"
+}

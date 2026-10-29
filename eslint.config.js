@@ -2,7 +2,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'test/fixtures', 'eslint.config.js'],
+    ignores: ['dist', 'site', 'test/fixtures', 'eslint.config.js'],
   },
   tseslint.configs.recommendedTypeChecked,
   {

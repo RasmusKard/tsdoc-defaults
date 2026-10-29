@@ -3,3 +3,4 @@ test/fixtures
 *.md
 package-lock.json
 .claude
+site

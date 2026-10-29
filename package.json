@@ -29,7 +29,8 @@
     "lint": "eslint . && prettier --check .",
     "typecheck": "tsc",
     "check": "npm run lint && npm run typecheck && npm run test",
-    "prepublishOnly": "npm run check && npm run build"
+    "prepublishOnly": "npm run check && npm run build",
+    "docs": "npm run build && node dist/cli.js example/options.ts --check && typedoc --options example/typedoc.json && cp example/index.html site/index.html"
   },
   "dependencies": {
     "typescript": "^6.0.0"
