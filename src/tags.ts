@@ -1,7 +1,5 @@
 import ts from 'typescript';
 
-// Markdown code span: a run of backticks, content without that run, one padding space each side stripped.
-const INLINE = /^(`+)(.+)\1$/s;
 const FENCED = /^```[^\n]*\n([\s\S]*?)\n```$/;
 
 export type Decl = ts.InterfaceDeclaration | ts.TypeAliasDeclaration;
@@ -24,9 +22,15 @@ export const tagText = (tag: ts.JSDocTag) =>
 export function classifyTag(text: string): ClassifiedTag {
   const fence = FENCED.exec(text);
   if (fence) return { form: 'fence', text: fence[1] };
-  const code = INLINE.exec(text);
-  if (code && !code[2].includes(code[1]))
-    return { form: 'code', text: code[2].replace(/^ (.+) $/s, '$1') };
+  // Markdown code span: a run of backticks, content without that run, one padding space each side stripped.
+  // Not one regex: a backreference to the run backtracks quadratically on unclosed runs.
+  const run = /^`+/.exec(text)?.[0];
+  const inner =
+    run && text.length > 2 * run.length && text.endsWith(run)
+      ? text.slice(run.length, -run.length)
+      : undefined;
+  if (run && inner !== undefined && !inner.includes(run))
+    return { form: 'code', text: inner.replace(/^ (.+) $/s, '$1') };
   return { form: 'bare', text };
 }
 
