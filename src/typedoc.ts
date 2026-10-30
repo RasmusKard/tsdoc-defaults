@@ -6,10 +6,11 @@ import { classifyTag } from './tags.js';
 /**
  * The expression a default tag holds, or undefined when the tag is prose.
  *
- * `text` is the tag content as TypeDoc renders it: one code span, one fence or bare text. A fence is read
- * as bare text, because TypeDoc itself wraps bare text in a fence before plugins see it: content that does
- * not parse as one expression is prose, never an error, and so is one that reads a name other than a known
- * global (`undefined`, `NaN`, `Infinity`, `globalThis`). A code span keeps the core's rule: any expression is code.
+ * `text` is the tag content as TypeDoc renders it: a code span, a fence or bare text.
+ * - A code span is code if it is one expression.
+ * - A fence counts as bare text, because TypeDoc wraps bare text in a fence before plugins see it.
+ * - Bare text is code only if it is one expression reading no names but `undefined`, `NaN`, `Infinity` and
+ *   `globalThis`. Anything else is prose, never an error.
  */
 export function defaultExpression(text: string): string | undefined {
   const tag = classifyTag(text);

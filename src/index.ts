@@ -79,10 +79,16 @@ export interface CheckResult {
 
 /**
  * Reads the `@default`/`@defaultValue` tags of one source file's top-level interfaces and object-type aliases.
- * A tag that is a code span, a fence or bare text parsing as an expression yields a member; bare prose and a default of exactly `undefined` are skipped.
- * Errors (both spellings on one member, a code span or fence that is not one expression, a generic or
- * non-exported declaration, a default reading a local declaration, a code tag in an unsupported location, a
- * malformed directive) are collected in `errors`, never thrown.
+ * A code span, a fence, or bare text that parses as an expression yields a member.
+ * Bare prose and a default of exactly `undefined` are skipped.
+ *
+ * Errors go in `errors`, never thrown:
+ * - both tags, or one tag twice, on a member
+ * - a code span or fence that is not one expression
+ * - a generic or non-exported declaration
+ * - a default that reads a local declaration
+ * - a code tag in an unsupported location
+ * - a malformed directive
  */
 export function extractDefaults(
   sourceText: string,
@@ -129,13 +135,14 @@ export function extractDefaults(
     const at = (n: ts.Node, message: string) =>
       fail(n.getStart(sf), `${name}.${key}: ${message}`);
     // Merged declarations of one name may repeat a member.
-    const twice =
-      extra ??
-      (result.members.some((m) => m.declaration === name && m.member === key)
-        ? node
-        : undefined);
-    if (twice) {
-      at(twice, 'has both @default and @defaultValue (or one twice); keep one');
+    const repeated = result.members.some(
+      (m) => m.declaration === name && m.member === key,
+    );
+    if (extra || repeated) {
+      at(
+        extra ?? node,
+        'has both @default and @defaultValue (or one twice); keep one',
+      );
       continue;
     }
     const tag = parseDefault(classifyTag(tagText(node)), scope.known);
@@ -229,9 +236,9 @@ const isStale = (out: string, text: string) =>
   normalize(fs.readFileSync(out, 'utf8')) !== normalize(text);
 
 /**
- * Generates the module text for each source file, without writing anything. A file with no code default
- * produces no entry but lists its output path in `obsolete`. If any file has errors, `files` and `obsolete`
- * are empty. Throws if a source file cannot be read.
+ * Generates the module text for each source file, without writing anything.
+ * A source with no code default gets no entry; its output path goes in `obsolete`.
+ * If any source has errors, `files` and `obsolete` are empty. Throws if a source file cannot be read.
  */
 export function generate(
   files: string[],

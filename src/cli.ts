@@ -73,16 +73,13 @@ function main(argv: string[]): number {
 function readConfig(project?: string) {
   if (!project && !fs.existsSync(CONFIG)) return undefined;
   const configPath = project ?? CONFIG;
-  const file = ts.readConfigFile(configPath, (f) => ts.sys.readFile(f));
-  if (file.error)
-    return { path: configPath, files: [], options: {}, errors: [file.error] };
-  const parsed = ts.parseJsonConfigFileContent(
-    file.config,
-    ts.sys,
-    path.resolve(path.dirname(configPath)),
-    undefined,
-    path.resolve(configPath),
-  );
+  const fatal: ts.Diagnostic[] = [];
+  const parsed = ts.getParsedCommandLineOfConfigFile(configPath, undefined, {
+    ...ts.sys,
+    onUnRecoverableConfigFileDiagnostic: (d) => fatal.push(d),
+  });
+  if (!parsed)
+    return { path: configPath, files: [], options: {}, errors: fatal };
   return {
     path: configPath,
     // A JS file can't hold an interface, so its tags would only be errors.
@@ -91,7 +88,9 @@ function readConfig(project?: string) {
       .map((f) => path.relative('.', f)),
     options: parsed.options,
     // TS18003 (no inputs) is reported as an empty file list instead.
-    errors: parsed.errors.filter((d) => d.code !== 18003),
+    errors: ts
+      .getConfigFileParsingDiagnostics(parsed)
+      .filter((d) => d.code !== 18003),
   };
 }
 

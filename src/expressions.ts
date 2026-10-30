@@ -177,6 +177,7 @@ export function parseDefault(
     return { kind: 'prose' };
   return {
     kind: 'code',
+    // `- 1`: positions in `parsed` count the `(` that `parseExpression` adds.
     expression: tag.text.slice(expr.getStart(parsed) - 1, expr.end - 1),
     ids,
   };
@@ -186,7 +187,7 @@ export function parseDefault(
 function wholeExpression(sf: ts.SourceFile): ts.Expression | undefined {
   const [s] = sf.statements;
   const paren = s && ts.isExpressionStatement(s) ? s.expression : undefined;
-  // `1) + (2` balances the added parentheses; only an expression spanning the whole text is one expression.
+  // `1) + (2` also parses inside the added parentheses: require the expression to end at the added `;`.
   return !parseDiagnostics(sf).length &&
     sf.statements.length === 1 &&
     paren &&

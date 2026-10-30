@@ -26,9 +26,10 @@ function renderMember(key: string, expr: string): string {
   const margin = Math.min(
     ...lines.filter(movable).map((l) => /^ */.exec(l)![0].length),
   );
-  const body = lines.map((l, i) =>
-    movable(l, i) ? `    ${l.slice(margin)}` : i === 0 || fixed.has(i) ? l : '',
-  );
+  const body = lines.map((l, i) => {
+    if (i === 0 || fixed.has(i)) return l;
+    return l.trim() ? `    ${l.slice(margin)}` : '';
+  });
   return `    ${key}: ${body.join('\n')},`;
 }
 
