@@ -76,6 +76,20 @@ void test('--check ignores formatting and fails on stale, missing or leftover fi
   assert.deepEqual(fs.readdirSync(dir), ['a.ts']);
 });
 
+void test('a generated file whose source was deleted is stale, then removed', () => {
+  const dir = tmp();
+  const glob = path.join(dir, '*.ts');
+  fs.writeFileSync(path.join(dir, 'a.ts'), SOURCE);
+  fs.writeFileSync(path.join(dir, 'b.ts'), 'export const x = 1;\n');
+  assert.equal(cli(glob).code, 0);
+  fs.rmSync(path.join(dir, 'a.ts'));
+  const r = cli('--check', glob);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /a\.defaults\.ts is stale: run tsdoc-defaults/);
+  assert.equal(cli(glob).code, 0);
+  assert.deepEqual(fs.readdirSync(dir), ['b.ts']);
+});
+
 void test('a .defaults.ts file without the generated header is never removed', () => {
   const dir = tmp();
   const source = path.join(dir, 'a.ts');
