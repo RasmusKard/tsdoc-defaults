@@ -3,7 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import { sameSyntax } from './compare.js';
 import { parseDefault, scopeOf } from './expressions.js';
-import { renderModule } from './render.js';
+import { MARKER, renderModule } from './render.js';
 import {
   classifyTag,
   strayCodeTags,
@@ -64,7 +64,7 @@ export interface GeneratedFile {
 export interface GenerateResult {
   /** One entry per source file with at least one code default; empty when `errors` is not. */
   files: GeneratedFile[];
-  /** Output paths of the source files with no code default; a file at one is left over from an earlier run. Empty when `errors` is not. */
+  /** Generated modules on disk whose source no longer has a code default; delete them. Never a file tsdoc-defaults did not generate. Empty when `errors` is not. */
   obsolete: string[];
   /** The errors of every source file, collected. */
   errors: ExtractError[];
@@ -227,13 +227,19 @@ function sourceSpecifier(source: string, importExt = ''): string {
   return `./${path.basename(source, ext)}${runtime}`;
 }
 
+const isGenerated = (file: string) =>
+  fs.existsSync(file) && fs.readFileSync(file, 'utf8').includes(MARKER);
+
 const isStale = (out: string, text: string) =>
   !fs.existsSync(out) || !sameSyntax(fs.readFileSync(out, 'utf8'), text);
 
 /**
  * Generates the module text for each source file, without writing anything.
- * A source with no code default gets no entry; its output path goes in `obsolete`.
+ * A source with no code default gets no entry; its old generated module, if any, goes in `obsolete`.
  * If any source has errors, `files` and `obsolete` are empty. Throws if a source file cannot be read.
+ *
+ * Errors besides the tag errors of `extractDefaults`:
+ * - the output path holds a file tsdoc-defaults did not generate
  */
 export function generate(
   files: string[],
@@ -250,6 +256,15 @@ export function generate(
       obsolete.push(output);
       continue;
     }
+    if (fs.existsSync(output) && !isGenerated(output)) {
+      errors.push({
+        file: source,
+        line: 1,
+        column: 1,
+        message: `${output} exists without the tsdoc-defaults header; rename or remove it`,
+      });
+      continue;
+    }
     const text = renderModule(
       path.basename(source),
       sourceSpecifier(source, options.importExt),
@@ -257,9 +272,12 @@ export function generate(
     );
     out.push({ source, output, text });
   }
-  return errors.length
-    ? { files: [], obsolete: [], errors }
-    : { files: out, obsolete, errors };
+  if (errors.length) return { files: [], obsolete: [], errors };
+  return {
+    files: out,
+    obsolete: [...new Set(obsolete)].filter(isGenerated),
+    errors,
+  };
 }
 
 /**
@@ -278,7 +296,7 @@ export function check(
       ...result.files
         .filter((f) => isStale(f.output, f.text))
         .map((f) => f.output),
-      ...result.obsolete.filter((f) => fs.existsSync(f)),
+      ...result.obsolete,
     ],
     errors: result.errors,
   };

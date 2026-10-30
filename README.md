@@ -91,7 +91,7 @@ tsdoc-defaults [files or globs...] [--check] [--project <tsconfig>]
 | `--check` | Writes nothing; exits 1 and names each stale generated file. Formatting and comments don't count, so Prettier may run on generated files. |
 | `-p`, `--project <tsconfig>` | The tsconfig to use. Default: `./tsconfig.json`. It sets the default sources and the extension of the generated file's import. |
 
-- **Output:** `<name>.defaults.ts` next to each source with tags (`.defaults.mts`/`.defaults.cts` for `.mts`/`.cts`). A generated file whose source no longer has a code default is removed.
+- **Output:** `<name>.defaults.ts` next to each source with tags (`.defaults.mts`/`.defaults.cts` for `.mts`/`.cts`). A generated file whose source no longer has a code default is removed; a file there without the generated header is never overwritten or removed: it is an error if its source has tags.
 - **Exit codes:**
   - `0`: done
   - `1`: tag errors, printed as `file:line:col` with nothing written; or stale files with `--check`

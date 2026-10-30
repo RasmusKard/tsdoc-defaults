@@ -76,6 +76,35 @@ void test('--check ignores formatting and fails on stale, missing or leftover fi
   assert.deepEqual(fs.readdirSync(dir), ['a.ts']);
 });
 
+void test('a .defaults.ts file without the generated header is never removed', () => {
+  const dir = tmp();
+  const source = path.join(dir, 'a.ts');
+  const own = path.join(dir, 'a.defaults.ts');
+  fs.writeFileSync(source, 'export const x = 1;\n');
+  fs.writeFileSync(own, 'export const y = 2;\n');
+  assert.equal(cli('--check', source).code, 0);
+  assert.equal(cli(source).code, 0);
+  fs.writeFileSync(source, SOURCE);
+  const r = cli(source);
+  assert.equal(r.code, 1);
+  assert.match(
+    r.out,
+    /a\.defaults\.ts exists without the tsdoc-defaults header/,
+  );
+  assert.equal(fs.readFileSync(own, 'utf8'), 'export const y = 2;\n');
+});
+
+void test('a leftover shared by two sources is stale once', () => {
+  const dir = tmp();
+  fs.writeFileSync(path.join(dir, 'a.ts'), SOURCE);
+  assert.equal(cli(path.join(dir, 'a.ts')).code, 0);
+  fs.writeFileSync(path.join(dir, 'a.ts'), 'export const x = 1;\n');
+  fs.writeFileSync(path.join(dir, 'a.tsx'), 'export const x = 1;\n');
+  const r = cli('--check', path.join(dir, '*.ts*'));
+  assert.equal(r.code, 1);
+  assert.equal(r.out.match(/is stale/g)?.length, 1);
+});
+
 void test('without globs, the tsconfig.json picks the sources and the import extension', () => {
   const cases: [object, string][] = [
     [{ module: 'nodenext' }, './a.js'],
