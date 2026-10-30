@@ -4,5 +4,6 @@
   "plugin": ["../dist/typedoc.js"],
   "out": "../site",
   "name": "tsdoc-defaults demo",
-  "readme": "none"
+  "readme": "none",
+  "treatWarningsAsErrors": true
 }

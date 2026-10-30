@@ -24,4 +24,5 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
-      - run: npm run build
+      # Builds the package first.
+      - run: npm run docs
