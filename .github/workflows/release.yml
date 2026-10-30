@@ -1,11 +1,7 @@
 name: Release
 
-# Merging release-please's PR creates a draft release with an attested tarball; a maintainer publishes it to npm with 2FA.
-# Then, locally:
-#   gh release download vX.Y.Z -p '*.tgz' -R RasmusKard/tsdoc-defaults
-#   gh attestation verify tsdoc-defaults-X.Y.Z.tgz -R RasmusKard/tsdoc-defaults
-#   npm publish tsdoc-defaults-X.Y.Z.tgz
-#   gh release edit vX.Y.Z --draft=false -R RasmusKard/tsdoc-defaults
+# Merging release-please's PR creates a draft release with an attested tarball; a maintainer publishes it to npm with 2FA
+# by running scripts/publish.sh X.Y.Z locally.
 on:
   push:
     branches: [main]
