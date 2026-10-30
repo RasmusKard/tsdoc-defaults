@@ -6,6 +6,8 @@
   "draft": true,
   "force-tag-creation": true,
   "packages": {
-    ".": {}
+    ".": {
+      "release-as": "1.0.0"
+    }
   }
 }
