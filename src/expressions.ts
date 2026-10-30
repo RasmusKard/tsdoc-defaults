@@ -147,7 +147,7 @@ function localNames(s: ts.Statement): string[] {
   return [];
 }
 
-const parseDiagnostics = (sf: ts.SourceFile) =>
+export const parseDiagnostics = (sf: ts.SourceFile) =>
   (sf as unknown as { parseDiagnostics: unknown[] }).parseDiagnostics;
 
 /** Parses `text` wrapped in parentheses; the newline lets it end in a line comment. */

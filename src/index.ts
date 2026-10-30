@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
+import { sameSyntax } from './compare.js';
 import { parseDefault, scopeOf } from './expressions.js';
 import { renderModule } from './render.js';
 import {
@@ -223,17 +224,8 @@ function sourceSpecifier(source: string, importExt = ''): string {
   return `./${path.basename(source, ext)}${runtime}`;
 }
 
-// The printer keeps trailing commas and arrow-parameter parentheses, which Prettier may have removed.
-const normalize = (text: string) =>
-  ts
-    .createPrinter({ removeComments: true })
-    .printFile(ts.createSourceFile('x.ts', text, ts.ScriptTarget.Latest))
-    .replace(/,(\s*[\]})>])/g, '$1')
-    .replace(/\((\w+)\) =>/g, '$1 =>');
-
 const isStale = (out: string, text: string) =>
-  !fs.existsSync(out) ||
-  normalize(fs.readFileSync(out, 'utf8')) !== normalize(text);
+  !fs.existsSync(out) || !sameSyntax(fs.readFileSync(out, 'utf8'), text);
 
 /**
  * Generates the module text for each source file, without writing anything.
