@@ -239,6 +239,7 @@ const isStale = (out: string, text: string) =>
  * If any source has errors, `files` and `obsolete` are empty. Throws if a source file cannot be read.
  *
  * Errors besides the tag errors of `extractDefaults`:
+ * - two sources with code defaults share an output path (`a.ts` and `a.tsx`)
  * - the output path holds a file tsdoc-defaults did not generate
  */
 export function generate(
@@ -254,6 +255,17 @@ export function generate(
     const output = outputPath(source);
     if (!result.members.length) {
       obsolete.push(output);
+      continue;
+    }
+    const other = out.find((f) => f.output === output);
+    if (other) {
+      if (other.source !== source)
+        errors.push({
+          file: source,
+          line: 1,
+          column: 1,
+          message: `${other.source} also generates ${output}; pass globs that match only one of them`,
+        });
       continue;
     }
     if (fs.existsSync(output) && !isGenerated(output)) {
@@ -273,9 +285,12 @@ export function generate(
     out.push({ source, output, text });
   }
   if (errors.length) return { files: [], obsolete: [], errors };
+  const generated = new Set(out.map((f) => f.output));
   return {
     files: out,
-    obsolete: [...new Set(obsolete)].filter(isGenerated),
+    obsolete: [...new Set(obsolete)].filter(
+      (f) => !generated.has(f) && isGenerated(f),
+    ),
     errors,
   };
 }

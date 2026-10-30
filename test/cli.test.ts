@@ -105,6 +105,18 @@ void test('a leftover shared by two sources is stale once', () => {
   assert.equal(r.out.match(/is stale/g)?.length, 1);
 });
 
+void test('sources sharing an output path', () => {
+  const dir = tmp();
+  fs.writeFileSync(path.join(dir, 'a.ts'), SOURCE);
+  fs.writeFileSync(path.join(dir, 'a.d.ts'), 'export declare const z: 1;\n');
+  assert.equal(cli(path.join(dir, '*.ts')).code, 0);
+  assert.ok(fs.existsSync(path.join(dir, 'a.defaults.ts')));
+  fs.writeFileSync(path.join(dir, 'a.tsx'), SOURCE);
+  const r = cli(path.join(dir, '*.ts*'));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /a\.tsx:1:1 .*a\.ts also generates .*a\.defaults\.ts/);
+});
+
 void test('without globs, the tsconfig.json picks the sources and the import extension', () => {
   const cases: [object, string][] = [
     [{ module: 'nodenext' }, './a.js'],
