@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/RasmusKard/tsdoc-defaults/compare/v1.0.0...v1.0.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* Remove generated files whose source was deleted ([#21](https://github.com/RasmusKard/tsdoc-defaults/issues/21)) ([8a14884](https://github.com/RasmusKard/tsdoc-defaults/commit/8a1488450ccde080942abca4486b7d52f4ec200e))
+
 ## [1.0.0](https://github.com/RasmusKard/tsdoc-defaults/compare/v0.1.1...v1.0.0) (2026-10-30)
 
 The CLI, API and TypeDoc plugin are now stable: breaking changes bump the major version.
