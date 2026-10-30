@@ -72,7 +72,7 @@ export interface GenerateResult {
 
 /** What `check` found for a set of source files. */
 export interface CheckResult {
-  /** Output paths that are missing, left over or whose content differs from what would be generated. */
+  /** Output paths that are missing, left over or whose content differs from what would be generated. Empty when `errors` is not. */
   stale: string[];
   /** The errors of every source file, collected. */
   errors: ExtractError[];
@@ -80,8 +80,9 @@ export interface CheckResult {
 
 /**
  * Reads the `@default`/`@defaultValue` tags of one source file's top-level interfaces and object-type aliases.
- * A code span, a fence, or bare text that parses as an expression yields a member.
- * Bare prose and a default of exactly `undefined` are skipped.
+ * A code span or fence yields a member. Bare text yields one only if it is one expression reading nothing but
+ * the file's imports, directive bindings, `undefined`, `NaN`, `Infinity` and `globalThis`; other bare text is
+ * prose and is skipped, as is a default of exactly `undefined`.
  *
  * Errors go in `errors`, never thrown:
  * - both tags, or one tag twice, on a member
@@ -298,8 +299,7 @@ export function generate(
 /**
  * Regenerates each source file's module in memory and compares it with the file on disk, ignoring formatting
  * and comments. A missing file is stale, and so is one left over for a source that no longer has a code
- * default. Source files with errors are reported in `errors`, not in `stale`. Throws if a source file cannot
- * be read.
+ * default. If any source file has errors, `stale` is empty. Throws if a source file cannot be read.
  */
 export function check(
   files: string[],

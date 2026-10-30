@@ -87,13 +87,14 @@ tsdoc-defaults [files or globs...] [--check] [--project <tsconfig>]
 | --- | --- |
 | `files or globs` | The sources to read. Default: the TypeScript files the tsconfig includes. Quote globs. |
 | `--check` | Writes nothing; exits 1 and names each stale generated file. Formatting and comments don't count, so Prettier may run on generated files. |
-| `-p`, `--project <tsconfig>` | The tsconfig to use. Default: `./tsconfig.json`. It sets the default sources and the extension of the generated file's import. |
+| `-p`, `--project <tsconfig>` | The tsconfig to use. Default: `./tsconfig.json`; without one, pass files or globs. It sets the default sources and the extension of the generated file's import. |
+| `-h`, `--help` | Prints the usage line. |
 
 - **Output:** `<name>.defaults.ts` next to each source with tags (`.defaults.mts`/`.defaults.cts` for `.mts`/`.cts`). A generated file whose source no longer has a code default is removed; a file there without the generated header is never overwritten or removed: it is an error if its source has tags.
 - **Exit codes:**
   - `0`: done
   - `1`: tag errors, printed as `file:line:col` with nothing written; or stale files with `--check`
-  - `2`: usage error
+  - `2`: usage error, an unreadable tsconfig, or no files to read
 
 ## API
 
@@ -138,6 +139,10 @@ Requires `typedoc@^0.28` (optional peer dependency).
 - Bare text that isn't an expression is prose, so `@default ten seconds` on a `number` is skipped without an error. Only a code span is checked.
 - The alternative, a `const` that the tag `{@link}`s, shows the constant's name in hovers and generated docs instead of its value.
 
+## Changelog
+
+[CHANGELOG.md](CHANGELOG.md) lists the changes in each release.
+
 ## License
 
-MIT
+[MIT](LICENSE)
