@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
+import { sameSyntax } from './compare.js';
 import { parseDefault, scopeOf } from './expressions.js';
-import { renderModule } from './render.js';
+import { MARKER, renderModule } from './render.js';
 import {
   classifyTag,
   strayCodeTags,
@@ -63,7 +64,7 @@ export interface GeneratedFile {
 export interface GenerateResult {
   /** One entry per source file with at least one code default; empty when `errors` is not. */
   files: GeneratedFile[];
-  /** Output paths of the source files with no code default; a file at one is left over from an earlier run. Empty when `errors` is not. */
+  /** Generated modules on disk whose source no longer has a code default; delete them. Never a file tsdoc-defaults did not generate. Empty when `errors` is not. */
   obsolete: string[];
   /** The errors of every source file, collected. */
   errors: ExtractError[];
@@ -79,10 +80,16 @@ export interface CheckResult {
 
 /**
  * Reads the `@default`/`@defaultValue` tags of one source file's top-level interfaces and object-type aliases.
- * A tag that is a code span, a fence or bare text parsing as an expression yields a member; bare prose and a default of exactly `undefined` are skipped.
- * Errors (both spellings on one member, a code span or fence that is not one expression, a generic or
- * non-exported declaration, a default reading a local declaration, a code tag in an unsupported location, a
- * malformed directive) are collected in `errors`, never thrown.
+ * A code span, a fence, or bare text that parses as an expression yields a member.
+ * Bare prose and a default of exactly `undefined` are skipped.
+ *
+ * Errors go in `errors`, never thrown:
+ * - both tags, or one tag twice, on a member
+ * - a code span or fence that is not one expression
+ * - a generic or non-exported declaration
+ * - a default that reads a local declaration
+ * - a code tag in an unsupported location
+ * - a malformed directive
  */
 export function extractDefaults(
   sourceText: string,
@@ -129,13 +136,14 @@ export function extractDefaults(
     const at = (n: ts.Node, message: string) =>
       fail(n.getStart(sf), `${name}.${key}: ${message}`);
     // Merged declarations of one name may repeat a member.
-    const twice =
-      extra ??
-      (result.members.some((m) => m.declaration === name && m.member === key)
-        ? node
-        : undefined);
-    if (twice) {
-      at(twice, 'has both @default and @defaultValue (or one twice); keep one');
+    const repeated = result.members.some(
+      (m) => m.declaration === name && m.member === key,
+    );
+    if (extra || repeated) {
+      at(
+        extra ?? node,
+        'has both @default and @defaultValue (or one twice); keep one',
+      );
       continue;
     }
     const tag = parseDefault(classifyTag(tagText(node)), scope.known);
@@ -209,6 +217,9 @@ export const formatError = (e: ExtractError) =>
 export const outputPath = (source: string) =>
   source.replace(/(\.d)?\.([cm]?)tsx?$|$/, '.defaults.$2ts');
 
+/** Whether a path is named like a generated module, see `outputPath`. */
+export const isOutput = (file: string) => /\.defaults\.[cm]?ts$/.test(file);
+
 function sourceSpecifier(source: string, importExt = ''): string {
   const [ext, flavour] = /\.([cm]?)tsx?$/.exec(source) ?? [''];
   // `./x` never resolves to `x.mts`; a module-flavoured source needs its runtime extension.
@@ -216,22 +227,20 @@ function sourceSpecifier(source: string, importExt = ''): string {
   return `./${path.basename(source, ext)}${runtime}`;
 }
 
-// The printer keeps trailing commas and arrow-parameter parentheses, which Prettier may have removed.
-const normalize = (text: string) =>
-  ts
-    .createPrinter({ removeComments: true })
-    .printFile(ts.createSourceFile('x.ts', text, ts.ScriptTarget.Latest))
-    .replace(/,(\s*[\]})>])/g, '$1')
-    .replace(/\((\w+)\) =>/g, '$1 =>');
+const isGenerated = (file: string) =>
+  fs.existsSync(file) && fs.readFileSync(file, 'utf8').includes(MARKER);
 
 const isStale = (out: string, text: string) =>
-  !fs.existsSync(out) ||
-  normalize(fs.readFileSync(out, 'utf8')) !== normalize(text);
+  !fs.existsSync(out) || !sameSyntax(fs.readFileSync(out, 'utf8'), text);
 
 /**
- * Generates the module text for each source file, without writing anything. A file with no code default
- * produces no entry but lists its output path in `obsolete`. If any file has errors, `files` and `obsolete`
- * are empty. Throws if a source file cannot be read.
+ * Generates the module text for each source file, without writing anything.
+ * A source with no code default gets no entry; its old generated module, if any, goes in `obsolete`.
+ * If any source has errors, `files` and `obsolete` are empty. Throws if a source file cannot be read.
+ *
+ * Errors besides the tag errors of `extractDefaults`:
+ * - two sources with code defaults share an output path (`a.ts` and `a.tsx`)
+ * - the output path holds a file tsdoc-defaults did not generate
  */
 export function generate(
   files: string[],
@@ -248,6 +257,26 @@ export function generate(
       obsolete.push(output);
       continue;
     }
+    const other = out.find((f) => f.output === output);
+    if (other) {
+      if (other.source !== source)
+        errors.push({
+          file: source,
+          line: 1,
+          column: 1,
+          message: `${other.source} also generates ${output}; pass globs that match only one of them`,
+        });
+      continue;
+    }
+    if (fs.existsSync(output) && !isGenerated(output)) {
+      errors.push({
+        file: source,
+        line: 1,
+        column: 1,
+        message: `${output} exists without the tsdoc-defaults header; rename or remove it`,
+      });
+      continue;
+    }
     const text = renderModule(
       path.basename(source),
       sourceSpecifier(source, options.importExt),
@@ -255,9 +284,15 @@ export function generate(
     );
     out.push({ source, output, text });
   }
-  return errors.length
-    ? { files: [], obsolete: [], errors }
-    : { files: out, obsolete, errors };
+  if (errors.length) return { files: [], obsolete: [], errors };
+  const generated = new Set(out.map((f) => f.output));
+  return {
+    files: out,
+    obsolete: [...new Set(obsolete)].filter(
+      (f) => !generated.has(f) && isGenerated(f),
+    ),
+    errors,
+  };
 }
 
 /**
@@ -276,7 +311,7 @@ export function check(
       ...result.files
         .filter((f) => isStale(f.output, f.text))
         .map((f) => f.output),
-      ...result.obsolete.filter((f) => fs.existsSync(f)),
+      ...result.obsolete,
     ],
     errors: result.errors,
   };

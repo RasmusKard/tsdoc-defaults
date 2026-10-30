@@ -147,7 +147,7 @@ function localNames(s: ts.Statement): string[] {
   return [];
 }
 
-const parseDiagnostics = (sf: ts.SourceFile) =>
+export const parseDiagnostics = (sf: ts.SourceFile) =>
   (sf as unknown as { parseDiagnostics: unknown[] }).parseDiagnostics;
 
 /** Parses `text` wrapped in parentheses; the newline lets it end in a line comment. */
@@ -177,6 +177,7 @@ export function parseDefault(
     return { kind: 'prose' };
   return {
     kind: 'code',
+    // `- 1`: positions in `parsed` count the `(` that `parseExpression` adds.
     expression: tag.text.slice(expr.getStart(parsed) - 1, expr.end - 1),
     ids,
   };
@@ -186,7 +187,7 @@ export function parseDefault(
 function wholeExpression(sf: ts.SourceFile): ts.Expression | undefined {
   const [s] = sf.statements;
   const paren = s && ts.isExpressionStatement(s) ? s.expression : undefined;
-  // `1) + (2` balances the added parentheses; only an expression spanning the whole text is one expression.
+  // `1) + (2` also parses inside the added parentheses: require the expression to end at the added `;`.
   return !parseDiagnostics(sf).length &&
     sf.statements.length === 1 &&
     paren &&
