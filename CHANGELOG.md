@@ -2,10 +2,20 @@
 
 ## [1.0.0](https://github.com/RasmusKard/tsdoc-defaults/compare/v0.1.1...v1.0.0) (2026-10-30)
 
+The CLI, API and TypeDoc plugin are now stable: breaking changes bump the major version.
+Upgrading from 0.1: if a `.defaults.ts` file you wrote by hand sits next to a source with default tags, rename it; generation now stops with an error instead of overwriting it.
+
+### Features
+
+* Export `isOutput`, which reports whether a path is named like a generated module ([c13abd1](https://github.com/RasmusKard/tsdoc-defaults/commit/c13abd10f4549ea5774e10e200017fd458e395df))
 
 ### Bug Fixes
 
 * Make --check reliable and never touch hand-written .defaults.ts files ([c13abd1](https://github.com/RasmusKard/tsdoc-defaults/commit/c13abd10f4549ea5774e10e200017fd458e395df))
+  * `--check` compares syntax trees: an edit inside a string is now stale, and Prettier's quote and parenthesis changes no longer are.
+  * A `.defaults.ts` file without the generated header is never overwritten or removed; it is an error if its source has tags.
+  * Two sources with code defaults and one output path (`a.ts` and `a.tsx`) are an error instead of one silently winning.
+  * `GenerateResult.obsolete` lists only generated files that exist on disk, not every possible output path.
 
 ## [0.1.1](https://github.com/RasmusKard/tsdoc-defaults/compare/v0.1.0...v0.1.1) (2026-10-29)
 
