@@ -3,7 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import { sameSyntax } from './compare.js';
 import { parseDefault, scopeOf } from './expressions.js';
-import { MARKER, renderModule } from './render.js';
+import { headerSource, MARKER, renderModule } from './render.js';
 import {
   classifyTag,
   strayCodeTags,
@@ -64,7 +64,7 @@ export interface GeneratedFile {
 export interface GenerateResult {
   /** One entry per source file with at least one code default; empty when `errors` is not. */
   files: GeneratedFile[];
-  /** Generated modules on disk whose source no longer has a code default; delete them. Never a file tsdoc-defaults did not generate. Empty when `errors` is not. */
+  /** Generated modules on disk whose source was deleted or no longer has a code default; delete them. Never a file tsdoc-defaults did not generate. Empty when `errors` is not. */
   obsolete: string[];
   /** The errors of every source file, collected. */
   errors: ExtractError[];
@@ -231,12 +231,20 @@ function sourceSpecifier(source: string, importExt = ''): string {
 const isGenerated = (file: string) =>
   fs.existsSync(file) && fs.readFileSync(file, 'utf8').includes(MARKER);
 
+/** Whether `file` is a generated module whose header names a source that no longer exists. */
+function isOrphan(file: string): boolean {
+  const source = headerSource(fs.readFileSync(file, 'utf8'));
+  return !!source && !fs.existsSync(path.join(path.dirname(file), source));
+}
+
 const isStale = (out: string, text: string) =>
   !fs.existsSync(out) || !sameSyntax(fs.readFileSync(out, 'utf8'), text);
 
 /**
  * Generates the module text for each source file, without writing anything.
  * A source with no code default gets no entry; its old generated module, if any, goes in `obsolete`.
+ * A path named like a generated module (see `isOutput`) is not read as a source; it goes in `obsolete` if
+ * tsdoc-defaults generated it and the source its header names no longer exists.
  * If any source has errors, `files` and `obsolete` are empty. Throws if a source file cannot be read.
  *
  * Errors besides the tag errors of `extractDefaults`:
@@ -251,6 +259,10 @@ export function generate(
   const out: GeneratedFile[] = [];
   const obsolete: string[] = [];
   for (const source of files) {
+    if (isOutput(source)) {
+      if (isOrphan(source)) obsolete.push(source);
+      continue;
+    }
     const result = extractDefaults(fs.readFileSync(source, 'utf8'), source);
     errors.push(...result.errors);
     const output = outputPath(source);
@@ -298,8 +310,8 @@ export function generate(
 
 /**
  * Regenerates each source file's module in memory and compares it with the file on disk, ignoring formatting
- * and comments. A missing file is stale, and so is one left over for a source that no longer has a code
- * default. If any source file has errors, `stale` is empty. Throws if a source file cannot be read.
+ * and comments. A missing file is stale, and so is a leftover that `generate` lists in `obsolete`. If any
+ * source file has errors, `stale` is empty. Throws if a source file cannot be read.
  */
 export function check(
   files: string[],

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import ts from 'typescript';
-import { check, formatError, generate, isOutput } from './index.js';
+import { check, formatError, generate } from './index.js';
 
 const USAGE =
   'usage: tsdoc-defaults [globs...] [--check] [--project <tsconfig>] [--help]';
@@ -38,14 +38,12 @@ function main(argv: string[]): number {
     console.error(messages.map((m) => `${config.path}: ${m}`).join('\n'));
     return 2;
   }
-  // Generated files are never sources, so `src/**/*.ts` is safe.
+  // Generated files matched here are never read as sources; `generate` only checks whether their source is gone.
   const files = (
     args.positionals.length
       ? fs.globSync(args.positionals)
       : (config?.files ?? [])
-  )
-    .filter((f) => !isOutput(f))
-    .sort();
+  ).sort();
   if (!files.length) {
     console.error(
       args.positionals.length
