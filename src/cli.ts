@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import ts from 'typescript';
-import { check, formatError, generate } from './index.js';
+import { check, formatError, generate, isOutput } from './index.js';
 
 const USAGE =
   'usage: tsdoc-defaults [globs...] [--check] [--project <tsconfig>] [--help]';
@@ -44,7 +44,7 @@ function main(argv: string[]): number {
       ? fs.globSync(args.positionals)
       : (config?.files ?? [])
   )
-    .filter((f) => !/\.defaults\.[cm]?ts$/.test(f))
+    .filter((f) => !isOutput(f))
     .sort();
   if (!files.length) {
     console.error(
