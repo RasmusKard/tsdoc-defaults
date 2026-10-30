@@ -1,6 +1,4 @@
-# tsdoc-defaults
-
-**A CLI that turns TSDoc `@default` tags into a typed `DEFAULTS` constant, so the default your docs show is the one your code uses.**
+**Single source of truth for defaults - turn TSDoc `@default` tags into a typed runtime `DEFAULTS` constant.**
 
 <table>
 <tr><th>Without tsdoc-defaults: the default lives twice</th><th>With tsdoc-defaults: the default lives once</th></tr>
