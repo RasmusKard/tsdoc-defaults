@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/RasmusKard/tsdoc-defaults/compare/v0.1.1...v1.0.0) (2026-10-30)
+
+
+### Bug Fixes
+
+* Make --check reliable and never touch hand-written .defaults.ts files ([c13abd1](https://github.com/RasmusKard/tsdoc-defaults/commit/c13abd10f4549ea5774e10e200017fd458e395df))
+
 ## [0.1.1](https://github.com/RasmusKard/tsdoc-defaults/compare/v0.1.0...v0.1.1) (2026-10-29)
 
 
