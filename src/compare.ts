@@ -28,6 +28,13 @@ function keyText(n: ts.Node): string | undefined {
     : undefined;
 }
 
+/** A node's `text`, with a regex's flags sorted as Prettier sorts them. */
+function textOf(n: ts.Node): unknown {
+  if (!ts.isRegularExpressionLiteral(n)) return (n as { text?: unknown }).text;
+  const flags = n.text.lastIndexOf('/') + 1;
+  return n.text.slice(0, flags) + [...n.text.slice(flags)].sort().join('');
+}
+
 function children(n: ts.Node): ts.Node[] {
   const out: ts.Node[] = [];
   // A block body: `forEachChild` stops at the first truthy return.
@@ -52,7 +59,7 @@ function sameNode(a: ts.Node, b: ts.Node): boolean {
   return (
     a.kind === b.kind &&
     (a.flags & FLAGS) === (b.flags & FLAGS) &&
-    x.text === y.text &&
+    textOf(a) === textOf(b) &&
     SCALARS.every((k) => x[k] === y[k]) &&
     sameChildren(a, b)
   );
@@ -60,7 +67,8 @@ function sameNode(a: ts.Node, b: ts.Node): boolean {
 
 /**
  * Whether two module texts have the same syntax tree, ignoring what a formatter changes: whitespace,
- * comments, semicolons, trailing commas, redundant parentheses, quote style and quotes around property names.
+ * comments, semicolons, trailing commas, redundant parentheses, quote style, quotes around property names and the
+ * order of regex flags.
  * Literals compare by value. A text with syntax errors never matches.
  */
 export function sameSyntax(a: string, b: string): boolean {
