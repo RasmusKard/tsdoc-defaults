@@ -36,7 +36,7 @@ export interface ExtractError {
 export interface ExtractResult {
   /** The members with a code default, in source order. */
   members: DefaultMember[];
-  /** Import statements copied from the source file because a default reads one of their bindings. */
+  /** Import statements copied from the source file because a default reads one of their bindings; never one for a name a directive binds. */
   imports: string[];
   /** Import statements from `// tsdoc-defaults:` directives, verbatim. */
   directives: string[];

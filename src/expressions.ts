@@ -12,7 +12,7 @@ export const KNOWN_GLOBALS = new Set([
 ]);
 
 export type Scope = {
-  /** Local binding name to the import statement that binds it. */
+  /** Local binding name to the import statement that binds it, excluding names a directive binds. */
   imports: Map<string, string>;
   /** Names of top-level declarations in the file, excluding ones a directive binds. */
   locals: Set<string>;
@@ -53,6 +53,7 @@ export function scopeOf(sf: ts.SourceFile, fail: Fail): Scope {
       directives.push(text);
     bindings?.forEach((name) => {
       known.add(name);
+      imports.delete(name);
       locals.delete(name);
     });
   }
