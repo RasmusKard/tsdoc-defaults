@@ -137,11 +137,15 @@ function importBindings(
 }
 
 function localNames(s: ts.Statement): string[] {
-  // shortcut: destructured top-level consts are not detected as locals; add if a real codebase needs it
   if (ts.isVariableStatement(s))
-    return s.declarationList.declarations.flatMap((d) =>
-      ts.isIdentifier(d.name) ? [d.name.text] : [],
-    );
+    return s.declarationList.declarations.flatMap((d) => boundNames(d.name));
+  // `declare global` is named `global` but declares nothing local.
+  if (
+    ts.isModuleDeclaration(s) &&
+    ts.isIdentifier(s.name) &&
+    !(s.flags & ts.NodeFlags.GlobalAugmentation)
+  )
+    return [s.name.text];
   if (
     (ts.isFunctionDeclaration(s) ||
       ts.isClassDeclaration(s) ||
@@ -153,6 +157,13 @@ function localNames(s: ts.Statement): string[] {
     return [s.name.text];
   return [];
 }
+
+const boundNames = (name: ts.BindingName): string[] =>
+  ts.isIdentifier(name)
+    ? [name.text]
+    : name.elements.flatMap((el) =>
+        ts.isBindingElement(el) ? boundNames(el.name) : [],
+      );
 
 export const parseDiagnostics = (sf: ts.SourceFile) =>
   (sf as unknown as { parseDiagnostics: unknown[] }).parseDiagnostics;
