@@ -41,17 +41,24 @@ void test('bare text that only balances the added parentheses is prose', () => {
   assert.deepEqual(r.members, []);
 });
 
-void test('a directive is a real line comment, not a mention in a string or block comment', () => {
+void test('a directive is a real line comment, not a mention in a string, template or block comment', () => {
   const r = extract([
     "const a = 1; // tsdoc-defaults: import { P } from 'p'",
     'const s = \'// tsdoc-defaults: import { S } from "s"\';',
+    'const t = `${a} // tsdoc-defaults: import { U } from "u"`;',
+    "// tsdoc-defaults: import { Q } from 'q'",
     '/** Needs a `// tsdoc-defaults: import { T } from "t"` line. */',
     'export interface Opts {',
     '  /** @default `P.x` */',
     '  p?: number;',
+    '  /** @default `Q.x` */',
+    '  q?: number;',
     '}',
   ]);
-  assert.deepEqual(r.directives, ["import { P } from 'p'"]);
+  assert.deepEqual(r.directives, [
+    "import { P } from 'p'",
+    "import { Q } from 'q'",
+  ]);
 });
 
 void test('a directive is copied only if a default reads a name it binds, or it binds none', () => {

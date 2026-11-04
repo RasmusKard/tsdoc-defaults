@@ -65,22 +65,26 @@ export function scopeOf(sf: ts.SourceFile, fail: Fail): Scope {
 const sameStatement = (a: string, b: string) =>
   a.replace(/;$/, '') === b.replace(/;$/, '');
 
-/** Position and text of every `// tsdoc-defaults:` line comment; the scanner skips mentions in strings and block comments. */
+/** Position and text of every `// tsdoc-defaults:` line comment; mentions in strings, templates and block comments don't count. */
 function directiveComments(sf: ts.SourceFile): [number, string][] {
-  const scanner = ts.createScanner(
-    ts.ScriptTarget.Latest,
-    false,
-    sf.languageVariant,
-    sf.text,
-  );
-  const out: [number, string][] = [];
-  // shortcut: a template literal with `${}` desyncs the scanner until the next backtick; rescan if a real file hits it
-  while (scanner.scan() !== ts.SyntaxKind.EndOfFileToken) {
-    if (scanner.getToken() !== ts.SyntaxKind.SingleLineCommentTrivia) continue;
-    const m = DIRECTIVE.exec(scanner.getTokenText());
-    if (m) out.push([scanner.getTokenStart(), m[1].trim()]);
-  }
-  return out;
+  const comments = new Map<number, number>();
+  const visit = (n: ts.Node): void => {
+    if (ts.isJSDoc(n)) return;
+    if (!ts.isToken(n)) return n.getChildren(sf).forEach(visit);
+    // JSX text is not trivia, though the comment scanner would read `//` in it as a comment.
+    if (n.kind === ts.SyntaxKind.JsxText) return;
+    // The trivia before a token: the previous token's trailing comments, then its own leading ones.
+    for (const r of [
+      ...(ts.getTrailingCommentRanges(sf.text, n.pos) ?? []),
+      ...(ts.getLeadingCommentRanges(sf.text, n.pos) ?? []),
+    ])
+      comments.set(r.pos, r.end);
+  };
+  visit(sf);
+  return [...comments].flatMap(([pos, end]) => {
+    const m = DIRECTIVE.exec(sf.text.slice(pos, end));
+    return m ? [[pos, m[1].trim()] as [number, string]] : [];
+  });
 }
 
 /** The names one directive binds, or undefined if it is not a single import statement. */
