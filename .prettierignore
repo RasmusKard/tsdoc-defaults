@@ -1,7 +1,5 @@
-dist
 test/fixtures
 *.md
 package-lock.json
 .claude
-site
 .github/.release-please-manifest.json
