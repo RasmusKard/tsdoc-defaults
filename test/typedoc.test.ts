@@ -57,6 +57,15 @@ void test('text that is not one expression is prose, not an error', () => {
   assert.equal(defaultExpression('`[1, 2`'), undefined);
   assert.equal(defaultExpression('`1, 2`'), undefined);
   assert.equal(defaultExpression("```ts\n'GET', 'HEAD'\n```"), undefined);
+  assert.equal(defaultExpression("```ts\n{ mention: 'cc"), undefined);
+});
+
+void test('an indented fence or one of more than three backticks holds an expression', () => {
+  assert.equal(
+    defaultExpression('```ts\n  {\n    a: 1,\n  }\n  ```'),
+    '{\n  a: 1,\n}',
+  );
+  assert.equal(defaultExpression('````ts\n1\n````'), '1');
 });
 
 void test('works on reflections from another TypeDoc copy', () => {

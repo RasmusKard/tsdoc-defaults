@@ -173,7 +173,7 @@ export const parseExpression = (text: string) =>
   ts.createSourceFile('x.ts', `(${text}\n);`, ts.ScriptTarget.Latest, true);
 
 /**
- * Parses a classified tag. A code span or fence must parse as one expression or it is an error; bare text
+ * Parses a classified tag. A code span or fence that is not closed or not one expression is an error; bare text
  * that does not parse, or that reads a name not in `known` (`100 (ms)`, `none`), is prose.
  * The expression is the tag text without surrounding whitespace and comments; `ids` are the names it reads.
  */
@@ -181,6 +181,12 @@ export function parseDefault(
   tag: ClassifiedTag,
   known: ReadonlySet<string>,
 ): ParsedDefault {
+  if (tag.form === 'unclosed')
+    return {
+      kind: 'error',
+      message:
+        'the code span or fence in the default tag is not closed, or a word starting with @ ends the tag before it closes',
+    };
   const parsed = parseExpression(tag.text);
   const expr = wholeExpression(parsed);
   if (!expr)

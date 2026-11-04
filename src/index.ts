@@ -86,7 +86,7 @@ export interface CheckResult {
  *
  * Errors go in `errors`, never thrown:
  * - both tags, or one tag twice, on a member
- * - a code span or fence that is not one expression
+ * - a code span or fence that is not closed or not one expression
  * - a generic or non-exported declaration
  * - a default that reads a local declaration
  * - a declaration named `DEFAULTS`, or a default that reads `DEFAULTS`: the generated constant's name

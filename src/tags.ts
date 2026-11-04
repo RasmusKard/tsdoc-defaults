@@ -1,9 +1,10 @@
 import ts from 'typescript';
 
-const FENCED = /^```[^\n]*\n([\s\S]*?)\n```$/;
+// The closing run's length is checked in code, not by a backreference; `(?!`)` keeps the opening run from backtracking.
+const FENCED = /^(`{3,})(?!`)[^\n]*\n([\s\S]*)\n([ \t]*)(`+)$/;
 
 export type Decl = ts.InterfaceDeclaration | ts.TypeAliasDeclaration;
-export type TagForm = 'code' | 'fence' | 'bare';
+export type TagForm = 'code' | 'fence' | 'unclosed' | 'bare';
 /** A default tag's form and the text that may be its expression. */
 export type ClassifiedTag = { form: TagForm; text: string };
 
@@ -18,13 +19,20 @@ export const defaultTags = (node: ts.Node) =>
 export const tagText = (tag: ts.JSDocTag) =>
   (ts.getTextOfJSDocComment(tag.comment) ?? '').replace(/\r\n?/g, '\n').trim();
 
-/** Classifies a tag's text as one code span, one fence (any info string) or bare text, and strips the delimiters. */
+/**
+ * Classifies a tag's text as one code span, one fence (any info string, any indentation), a span or fence
+ * that is never closed, or bare text, and strips the delimiters.
+ */
 export function classifyTag(text: string): ClassifiedTag {
   const fence = FENCED.exec(text);
-  if (fence) return { form: 'fence', text: fence[1] };
+  if (fence && fence[4].length >= fence[1].length)
+    return { form: 'fence', text: dedent(fence[2], fence[3].length) };
+  const run = /^`+/.exec(text)?.[0];
+  // Neither a span nor a fence closes without a later run at least as long.
+  if (run && !text.slice(run.length).includes(run))
+    return { form: 'unclosed', text };
   // Markdown code span: a run of backticks, content without that run, one padding space each side stripped.
   // Not one regex: a backreference to the run backtracks quadratically on unclosed runs.
-  const run = /^`+/.exec(text)?.[0];
   const inner =
     run && text.length > 2 * run.length && text.endsWith(run)
       ? text.slice(run.length, -run.length)
@@ -33,6 +41,12 @@ export function classifyTag(text: string): ClassifiedTag {
     return { form: 'code', text: inner.replace(/^ (.+) $/s, '$1') };
   return { form: 'bare', text };
 }
+
+// Markdown removes the opening fence's indentation from each line; `tagText` trimmed it, so the closing fence's stands in.
+const dedent = (content: string, indent: number) =>
+  indent
+    ? content.replace(new RegExp(`^[ \\t]{0,${indent}}`, 'gm'), '')
+    : content;
 
 /** Direct, non-computed property members of top-level interfaces and object-literal type aliases that carry a default tag, in source order. */
 export function taggedMembers(sf: ts.SourceFile): {
