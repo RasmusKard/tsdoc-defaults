@@ -20,12 +20,21 @@ const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'tsdoc-defaults-'));
 const SOURCE =
   'export interface Opts {\n  /** @default `1` */\n  x?: number;\n}\n';
 
-void test('globs match sources but never generated files', () => {
+void test('an argument is a file, or a glob that matches sources but never generated files or directories', () => {
   const dir = tmp();
   fs.writeFileSync(path.join(dir, 'a.ts'), SOURCE);
-  assert.equal(cli(path.join(dir, '*.ts')).code, 0);
-  assert.equal(cli(path.join(dir, '*.ts')).code, 0);
-  assert.deepEqual(fs.readdirSync(dir).sort(), ['a.defaults.ts', 'a.ts']);
+  fs.mkdirSync(path.join(dir, 'sub'));
+  assert.equal(cli(path.join(dir, '*')).code, 0);
+  assert.equal(cli(path.join(dir, '*')).code, 0);
+  assert.deepEqual(fs.readdirSync(dir).sort(), [
+    'a.defaults.ts',
+    'a.ts',
+    'sub',
+  ]);
+  assert.equal(cli(path.join(dir, 'sub')).code, 2);
+  fs.writeFileSync(path.join(dir, '[ab].ts'), SOURCE);
+  assert.equal(cli(path.join(dir, '[ab].ts')).code, 0);
+  assert.ok(fs.existsSync(path.join(dir, '[ab].defaults.ts')));
 });
 
 void test('usage', () => {
