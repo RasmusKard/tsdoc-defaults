@@ -54,6 +54,17 @@ void test('a directive is a real line comment, not a mention in a string or bloc
   assert.deepEqual(r.directives, ["import { P } from 'p'"]);
 });
 
+void test('a directive is copied only if a default reads a name it binds, or it binds none', () => {
+  const r = extract([
+    "// tsdoc-defaults: import { join } from 'node:path'",
+    "// tsdoc-defaults: import 'reflect-metadata'",
+    'export interface Opts {',
+    '  /** @default `1` */ x?: number;',
+    '}',
+  ]);
+  assert.deepEqual(r.directives, ["import 'reflect-metadata'"]);
+});
+
 void test('import attributes, `import x = require()` and type-only imports are copied as written', () => {
   const r = extract([
     "import data from './d.json' with { type: 'json' };",
