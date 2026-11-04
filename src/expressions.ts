@@ -199,10 +199,15 @@ function wholeExpression(sf: ts.SourceFile): ts.Expression | undefined {
     sf.statements.length === 1 &&
     paren &&
     ts.isParenthesizedExpression(paren) &&
-    paren.end === sf.text.length - 1
+    paren.end === sf.text.length - 1 &&
+    !isCommaList(paren.expression)
     ? paren.expression
     : undefined;
 }
+
+// `a, b` parses as one expression inside the added parentheses, but as a property value it is two.
+const isCommaList = (e: ts.Expression) =>
+  ts.isBinaryExpression(e) && e.operatorToken.kind === ts.SyntaxKind.CommaToken;
 
 /** Identifiers an expression reads from its enclosing scope (not property names, not names it declares itself). */
 function freeIdentifiers(sf: ts.SourceFile): string[] {
