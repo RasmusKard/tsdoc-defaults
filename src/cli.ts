@@ -98,13 +98,12 @@ function importExtOf(o: ts.CompilerOptions) {
     return '.ts';
   const { Node16, NodeNext } = ts.ModuleResolutionKind;
   const module = o.module ?? 0;
-  // Without moduleResolution, the node16 through nodenext modules resolve like nodenext.
-  const resolution =
-    o.moduleResolution ??
-    (module >= ts.ModuleKind.Node16 && module <= ts.ModuleKind.NodeNext
-      ? NodeNext
-      : undefined);
-  return resolution === Node16 || resolution === NodeNext ? '.js' : undefined;
+  // Without moduleResolution, the node16 through nodenext modules imply node16 or nodenext resolution.
+  const nodeResolution =
+    o.moduleResolution === undefined
+      ? module >= ts.ModuleKind.Node16 && module <= ts.ModuleKind.NodeNext
+      : o.moduleResolution === Node16 || o.moduleResolution === NodeNext;
+  return nodeResolution ? '.js' : undefined;
 }
 
 function runGenerate(files: string[], importExt?: string) {

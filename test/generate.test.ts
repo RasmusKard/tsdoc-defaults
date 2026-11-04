@@ -50,6 +50,34 @@ void test('a default of the wrong type does not compile', () => {
   assert.notDeepEqual(compileErrors(path.join(dir, 'tsconfig.json')), []);
 });
 
+void test('the import of a .mts or .cts source compiles with each import extension', () => {
+  for (const [importExt, compilerOptions] of [
+    [undefined, { module: 'preserve', moduleResolution: 'bundler' }],
+    ['.js', { module: 'nodenext' }],
+    ['.ts', { module: 'nodenext', allowImportingTsExtensions: true }],
+  ] as const) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tsdoc-defaults-'));
+    const config = path.join(dir, 'tsconfig.json');
+    fs.writeFileSync(
+      config,
+      JSON.stringify({
+        compilerOptions: { ...compilerOptions, strict: true, noEmit: true },
+      }),
+    );
+    const sources = ['a.mts', 'b.cts', 'c.d.mts', 'd.d.cts'].map((f) =>
+      path.join(dir, f),
+    );
+    for (const source of sources)
+      fs.writeFileSync(
+        source,
+        'export interface Opts {\n  /** @default `1` */\n  x?: number;\n}\n',
+      );
+    for (const file of generate(sources, { importExt }).files)
+      fs.writeFileSync(file.output, file.text);
+    assert.deepEqual(compileErrors(config), [], importExt);
+  }
+});
+
 const UNSUPPORTED =
   'unsupported location for a default tag: only direct members of top-level interfaces and object-type aliases';
 const LOCAL = (id: string) =>

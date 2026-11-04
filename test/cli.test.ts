@@ -132,15 +132,20 @@ void test('sources sharing an output path', () => {
 });
 
 void test('without globs, the tsconfig.json picks the sources and the import extension', () => {
-  const cases: [object, string][] = [
-    [{ module: 'nodenext' }, './a.js'],
-    [{ module: 'nodenext', allowImportingTsExtensions: true }, './a.ts'],
-    [{ module: 'preserve', moduleResolution: 'bundler' }, './a'],
+  const cases: [object, string, string][] = [
+    [{ module: 'nodenext' }, './a.js', './m.mjs'],
+    [
+      { module: 'nodenext', allowImportingTsExtensions: true },
+      './a.ts',
+      './m.mts',
+    ],
+    [{ module: 'preserve', moduleResolution: 'bundler' }, './a', './m.mjs'],
   ];
-  for (const [compilerOptions, specifier] of cases) {
+  for (const [compilerOptions, a, m] of cases) {
     const dir = tmp();
     fs.mkdirSync(path.join(dir, 'src'));
     fs.writeFileSync(path.join(dir, 'src/a.ts'), SOURCE);
+    fs.writeFileSync(path.join(dir, 'src/m.mts'), SOURCE);
     fs.writeFileSync(path.join(dir, 'b.ts'), SOURCE.replace('export ', ''));
     fs.writeFileSync(
       path.join(dir, 'tsconfig.json'),
@@ -148,8 +153,10 @@ void test('without globs, the tsconfig.json picks the sources and the import ext
     );
     const r = cliIn(dir);
     assert.equal(r.code, 0, r.out);
-    const text = fs.readFileSync(path.join(dir, 'src/a.defaults.ts'), 'utf8');
-    assert.match(text, new RegExp(`from '${specifier}';`), specifier);
+    const read = (f: string) =>
+      fs.readFileSync(path.join(dir, 'src', f), 'utf8');
+    assert.match(read('a.defaults.ts'), new RegExp(`from '${a}';`), a);
+    assert.match(read('m.defaults.mts'), new RegExp(`from '${m}';`), m);
   }
   const dir = tmp();
   fs.writeFileSync(path.join(dir, 'a.ts'), SOURCE);
