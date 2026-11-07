@@ -31,6 +31,32 @@ void test('a CRLF source yields an LF-only expression', () => {
   );
 });
 
+void test('a fence may be indented under the tag or use more than three backticks', () => {
+  const r = extract([
+    'export interface Opts {',
+    '  /**',
+    '   * @default',
+    '   *   ```ts',
+    '   *   `line1',
+    '   *     line2`',
+    '   *   ```',
+    '   */',
+    '  x?: string;',
+    '  /**',
+    '   * @default',
+    '   * ````ts',
+    '   * 1',
+    '   * `````',
+    '   */',
+    '  y?: number;',
+    '}',
+  ]);
+  assert.deepEqual(
+    r.members.map((m) => m.expression),
+    ['`line1\n  line2`', '1'],
+  );
+});
+
 void test('bare text that only balances the added parentheses or lists expressions is prose', () => {
   const r = extract([
     'export interface Opts {',
