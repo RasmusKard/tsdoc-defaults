@@ -6,7 +6,7 @@ import ts from 'typescript';
 import { check, formatError, generate } from './index.js';
 
 const USAGE =
-  'usage: tsdoc-defaults [globs...] [--check] [--project <tsconfig>] [--help]';
+  'usage: tsdoc-defaults [files or globs...] [--check] [--project <tsconfig>] [--help]';
 const OPTIONS = {
   check: { type: 'boolean' },
   help: { type: 'boolean', short: 'h' },
@@ -38,12 +38,9 @@ function main(argv: string[]): number {
     console.error(messages.map((m) => `${config.path}: ${m}`).join('\n'));
     return 2;
   }
-  // Generated files matched here are never read as sources; `generate` only checks whether their source is gone.
-  const files = (
-    args.positionals.length
-      ? fs.globSync(args.positionals)
-      : (config?.files ?? [])
-  ).sort();
+  const files = args.positionals.length
+    ? filesOf(args.positionals)
+    : (config?.files ?? []).sort();
   if (!files.length) {
     console.error(
       args.positionals.length
@@ -66,6 +63,17 @@ function main(argv: string[]): number {
     console.error(`${out} is stale: run tsdoc-defaults`),
   );
   return result.stale.length ? 1 : 0;
+}
+
+const isFile = (f: string) =>
+  !!fs.statSync(f, { throwIfNoEntry: false })?.isFile();
+
+/** The files the arguments name, sorted: an argument naming a file is used as is, any other is a glob; directories are skipped. */
+function filesOf(args: string[]): string[] {
+  const files = args.flatMap((a) =>
+    isFile(a) ? [path.normalize(a)] : fs.globSync(a).filter(isFile),
+  );
+  return [...new Set(files)].sort();
 }
 
 function readConfig(project?: string) {
