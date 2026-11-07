@@ -32,9 +32,7 @@
     "tsdoc-defaults": "dist/cli.js"
   },
   "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
+    "dist"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
