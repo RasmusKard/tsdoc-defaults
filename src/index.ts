@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
 import { sameSyntax } from './compare.js';
-import { parseDefault, scopeOf } from './expressions.js';
+import { parseDefault, scopeOf, type Scope } from './expressions.js';
 import { headerSource, MARKER, renderModule } from './render.js';
 import {
   classifyTag,
@@ -89,6 +89,7 @@ export interface CheckResult {
  * - a code span or fence that is not one expression
  * - a generic or non-exported declaration
  * - a default that reads a local declaration
+ * - a declaration named `DEFAULTS`, or a default that reads `DEFAULTS`: the generated constant's name
  * - a code tag in an unsupported location
  * - a malformed directive
  */
@@ -153,13 +154,11 @@ export function extractDefaults(
       at(node, tag.message);
       continue;
     }
-    for (const id of tag.ids)
-      if (!scope.imports.has(id) && scope.locals.has(id))
-        at(
-          node,
-          `\`${id}\` cannot reference a local declaration from a default; export it from another module or make it ambient`,
-        );
-    tag.ids.forEach((id) => read.add(id));
+    for (const id of tag.ids) {
+      read.add(id);
+      const problem = readProblem(id, scope);
+      if (problem) at(node, problem);
+    }
     for (const statement of tag.ids.flatMap(
       (id) => scope.imports.get(id) ?? [],
     ))
@@ -200,10 +199,21 @@ function exportedNames(sf: ts.SourceFile): Set<string> {
   );
 }
 
+/** Why a default cannot read `id`, if it cannot. */
+function readProblem(id: string, scope: Scope): string | undefined {
+  if (id === 'DEFAULTS')
+    return '`DEFAULTS` clashes with the generated constant; import it under another name';
+  if (!scope.imports.has(id) && scope.locals.has(id))
+    return `\`${id}\` cannot reference a local declaration from a default; export it from another module or make it ambient`;
+  return undefined;
+}
+
 /** Why the generated module cannot import a declaration's type, if it cannot. */
 function declProblem(decl: Decl, exported: Set<string>): string | undefined {
   if (decl.typeParameters?.length)
     return 'generic declarations are not supported';
+  if (decl.name.text === 'DEFAULTS')
+    return 'clashes with the generated constant `DEFAULTS`; rename it';
   const mods = ts.getCombinedModifierFlags(decl);
   const isExport = (mods & ts.ModifierFlags.Export) !== 0;
   const isDefault = (mods & ts.ModifierFlags.Default) !== 0;
