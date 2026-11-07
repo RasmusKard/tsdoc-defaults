@@ -31,14 +31,21 @@ void test('a CRLF source yields an LF-only expression', () => {
   );
 });
 
-void test('bare text that only balances the added parentheses is prose', () => {
+void test('bare text that only balances the added parentheses or lists expressions is prose', () => {
   const r = extract([
     'export interface Opts {',
     '  /** @default 1) + (2 */',
     '  x?: number;',
+    "  /** @default 'GET', 'HEAD' */",
+    '  methods?: string | string[];',
+    '  /** @default (1, 2) */',
+    '  y?: number;',
     '}',
   ]);
-  assert.deepEqual(r.members, []);
+  assert.deepEqual(
+    r.members.map((m) => m.expression),
+    ['(1, 2)'],
+  );
 });
 
 void test('a directive is a real line comment, not a mention in a string, template or block comment', () => {

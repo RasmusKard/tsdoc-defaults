@@ -53,8 +53,10 @@ void test('moves expression defaults into defaultValue and leaves prose alone', 
   );
 });
 
-void test('a code span that is not one expression is prose, not an error', () => {
+void test('text that is not one expression is prose, not an error', () => {
   assert.equal(defaultExpression('`[1, 2`'), undefined);
+  assert.equal(defaultExpression('`1, 2`'), undefined);
+  assert.equal(defaultExpression("```ts\n'GET', 'HEAD'\n```"), undefined);
 });
 
 void test('works on reflections from another TypeDoc copy', () => {

@@ -9,4 +9,6 @@ export interface Opts {
    * ```
    */
   fence?: number;
+  /** @default `1, 2` */
+  comma?: number;
 }

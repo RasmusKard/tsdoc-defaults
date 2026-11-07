@@ -86,6 +86,7 @@ const errors: Record<string, string[]> = {
   'not-expression.ts': [
     '2:7 Opts.span: the code in the default tag is not one expression',
     '5:6 Opts.fence: the code in the default tag is not one expression',
+    '12:7 Opts.comma: the code in the default tag is not one expression',
   ],
   'reads-defaults.ts': [
     '4:7 Opts.timeoutMs: `DEFAULTS` clashes with the generated constant; import it under another name',
