@@ -38,7 +38,7 @@ export interface ExtractResult {
   members: DefaultMember[];
   /** Import statements copied from the source file because a default reads one of their bindings; never one for a name a directive binds. */
   imports: string[];
-  /** Import statements from `// tsdoc-defaults:` directives, verbatim. */
+  /** Import statements from `// tsdoc-defaults:` directives that bind a name some default reads, plus any that bind no name (`import 'x'`); verbatim, each once. */
   directives: string[];
   /** Every problem found; when non-empty the other fields are incomplete. */
   errors: ExtractError[];
@@ -118,7 +118,7 @@ export function extractDefaults(
     });
   };
   const scope = scopeOf(sf, fail);
-  result.directives = scope.directives;
+  const read = new Set<string>();
   const members = taggedMembers(sf);
   const handled = new Set(members.flatMap(({ tags }) => tags));
   for (const tag of strayCodeTags(sf, handled))
@@ -159,6 +159,7 @@ export function extractDefaults(
           node,
           `\`${id}\` cannot reference a local declaration from a default; export it from another module or make it ambient`,
         );
+    tag.ids.forEach((id) => read.add(id));
     for (const statement of tag.ids.flatMap(
       (id) => scope.imports.get(id) ?? [],
     ))
@@ -171,6 +172,10 @@ export function extractDefaults(
   }
   // `undefined` means "no default": nothing to apply, and `Required<Pick<…>>` would reject it.
   result.members = result.members.filter((m) => m.expression !== 'undefined');
+  // A side-effect import binds nothing, so it can't be unused.
+  result.directives = scope.directives
+    .filter((d) => !d.names.length || d.names.some((n) => read.has(n)))
+    .map((d) => d.statement);
   for (const name of new Set(result.members.map((m) => m.declaration))) {
     const { decl } = members.find((m) => m.decl.name.text === name)!;
     const problem = declProblem(decl, exported);
