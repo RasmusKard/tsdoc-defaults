@@ -2,12 +2,12 @@ import ts from 'typescript';
 import { parseExpression } from './expressions.js';
 import type { ExtractResult } from './index.js';
 
-/** Indexes of the lines that start inside a template literal; re-indenting one would change the string. */
-function templateLines(expr: string): Set<number> {
+/** Indexes of the lines that start inside a literal (a template or a `\`-continued string); re-indenting one changes it. */
+function literalLines(expr: string): Set<number> {
   const sf = parseExpression(expr);
   const lines = new Set<number>();
   const visit = (n: ts.Node): void => {
-    if (ts.isTemplateLiteralToken(n)) {
+    if (ts.isLiteralExpression(n) || ts.isTemplateLiteralToken(n)) {
       const first = sf.getLineAndCharacterOfPosition(n.getStart(sf)).line;
       const last = sf.getLineAndCharacterOfPosition(n.end).line;
       for (let l = first + 1; l <= last; l++) lines.add(l);
@@ -21,7 +21,7 @@ function templateLines(expr: string): Set<number> {
 /** One `key: expr,` line; continuation lines of a multi-line expression are re-indented to sit inside the object. */
 function renderMember(key: string, expr: string): string {
   const lines = expr.split('\n');
-  const fixed = templateLines(expr);
+  const fixed = literalLines(expr);
   const movable = (l: string, i: number) => i > 0 && !fixed.has(i) && l.trim();
   const margin = Math.min(
     ...lines.filter(movable).map((l) => /^ */.exec(l)![0].length),

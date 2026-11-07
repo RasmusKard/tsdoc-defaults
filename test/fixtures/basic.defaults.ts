@@ -4,7 +4,7 @@ import type { BridgeOptions, IOSOptions, Theme, Listed } from './basic';
 export const DEFAULTS: {
   BridgeOptions: Required<Pick<BridgeOptions, 'timeoutMs' | 'fit' | 'webView' | 'data-enabled' | 0 | 'banner' | 'label' | 'retries'>>;
   IOSOptions: Required<Pick<IOSOptions, 'bounces'>>;
-  Theme: Required<Pick<Theme, 'palette'>>;
+  Theme: Required<Pick<Theme, 'palette' | 'font'>>;
   Listed: Required<Pick<Listed, 'x'>>;
 } = {
   BridgeOptions: {
@@ -23,6 +23,10 @@ export const DEFAULTS: {
   },
   Theme: {
     palette: { dark: false },
+    font: {
+      body: 'system-ui,\
+  sans-serif',
+    },
   },
   Listed: {
     x: 1,
