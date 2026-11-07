@@ -25,3 +25,5 @@ export class Klass {
 /** @default 1 */
 export const bare = 1;
 
+/** @default `{ a: 1 */
+export const unclosed = {};
