@@ -15,6 +15,7 @@ void test('formatting does not count', () => {
     ['const x = `a${ b }c`;', 'const x = `a${b}c`;'],
     ['const x = /a/ig;', 'const x = /a/gi;'],
     ['const x = String.raw`a\r\nb`;', 'const x = String.raw`a\nb`;'],
+    ['const x = new A;', 'const x = new A();'],
   ])
     assert.ok(sameSyntax(a, b), `${a} vs ${b}`);
 });
@@ -34,6 +35,10 @@ void test('code changes count', () => {
     ['const x = String.raw`d`;', 'const x = String.raw`\\d`;'],
     ['type T = typeof import("a");', 'type T = import("a");'],
     ['const x = /a/g;', 'const x = /a/gi;'],
+    ['const f = <T extends U>() => 1;', 'const f = <T = U>() => 1;'],
+    ['for (a;;);', 'for (;a;);'],
+    ['for (;a;);', 'for (;;a);'],
+    ['type M = { [K in T as U] };', 'type M = { [K in T]: U };'],
     ['const x = 1;', 'const x = 1; const y = 2;'],
     ['const x = 1;', 'const x = ;'],
   ])

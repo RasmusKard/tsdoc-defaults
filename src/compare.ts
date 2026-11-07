@@ -38,19 +38,26 @@ function textOf(n: ts.Node): unknown {
   return n.text.slice(0, flags) + [...n.text.slice(flags)].sort().join('');
 }
 
-function children(n: ts.Node): ts.Node[] {
-  const out: ts.Node[] = [];
+/** Each child with the property of `n` that holds it, so an absent optional child does not shift the next. */
+function children(n: ts.Node): [string | undefined, ts.Node][] {
+  const props = Object.entries(n);
+  const out: [string | undefined, ts.Node][] = [];
   // A block body: `forEachChild` stops at the first truthy return.
-  n.forEachChild((c) => {
-    out.push(unwrap(c));
-  });
+  const add = (c: ts.Node | ts.NodeArray<ts.Node>) => {
+    const key = props.find(([, v]) => v === c)?.[0];
+    for (const x of 'kind' in c ? [c] : c) out.push([key, unwrap(x)]);
+  };
+  n.forEachChild(add, add);
   return out;
 }
 
 function sameChildren(a: ts.Node, b: ts.Node): boolean {
   const ca = children(a);
   const cb = children(b);
-  return ca.length === cb.length && ca.every((c, i) => sameNode(c, cb[i]));
+  return (
+    ca.length === cb.length &&
+    ca.every(([k, c], i) => k === cb[i][0] && sameNode(c, cb[i][1]))
+  );
 }
 
 function sameNode(a: ts.Node, b: ts.Node): boolean {
