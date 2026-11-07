@@ -46,7 +46,7 @@ export interface ExtractResult {
 
 /** Options of `generate` and `check`. */
 export interface GenerateOptions {
-  /** Appended to the generated file's import of its source, e.g. `.js` for `moduleResolution: nodenext`. Default: none, except `.mjs`/`.cjs` for a `.mts`/`.cts` source, which cannot be imported without it. */
+  /** Appended to the generated file's import of its source, e.g. `.js` for `moduleResolution: nodenext`. Default: none. A `.mts`/`.cts` source, which cannot be imported without its own extension, gets the module-flavoured form: `.mjs`/`.cjs` for none or `.js`, `.mts`/`.cts` for `.ts`. */
   importExt?: string;
 }
 
@@ -238,9 +238,12 @@ export const isOutput = (file: string) => /\.defaults\.[cm]?ts$/.test(file);
 
 function sourceSpecifier(source: string, importExt = ''): string {
   const [ext, flavour] = /\.([cm]?)tsx?$/.exec(source) ?? [''];
-  // `./x` never resolves to `x.mts`; a module-flavoured source needs its runtime extension.
-  const runtime = importExt || (flavour ? `.${flavour}js` : '');
-  return `./${path.basename(source, ext)}${runtime}`;
+  // Neither `./x` nor `./x.js` resolves to `x.mts`; a module-flavoured source needs its own extension.
+  const flavoured =
+    flavour && /^(\.[jt]s)?$/.test(importExt)
+      ? `.${flavour}${importExt.slice(1) || 'js'}`
+      : importExt;
+  return `./${path.basename(source, ext)}${flavoured}`;
 }
 
 const isGenerated = (file: string) =>
