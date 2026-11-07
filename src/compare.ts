@@ -7,6 +7,7 @@ const SCALARS = [
   'keywordToken',
   'token',
   'isTypeOnly',
+  'isTypeOf',
   'isExportEquals',
   'phaseModifier',
 ];
@@ -28,8 +29,10 @@ function keyText(n: ts.Node): string | undefined {
     : undefined;
 }
 
-/** A node's `text`, with a regex's flags sorted as Prettier sorts them. */
+/** A node's `text`; a regex's with its flags sorted (Prettier sorts them); a template's raw text (a tag reads it). */
 function textOf(n: ts.Node): unknown {
+  // TypeScript keeps CRLF in raw text; the language reads it as LF.
+  if (ts.isTemplateLiteralToken(n)) return n.rawText?.replace(/\r\n?/g, '\n');
   if (!ts.isRegularExpressionLiteral(n)) return (n as { text?: unknown }).text;
   const flags = n.text.lastIndexOf('/') + 1;
   return n.text.slice(0, flags) + [...n.text.slice(flags)].sort().join('');
@@ -69,7 +72,7 @@ function sameNode(a: ts.Node, b: ts.Node): boolean {
  * Whether two module texts have the same syntax tree, ignoring what a formatter changes: whitespace,
  * comments, semicolons, trailing commas, redundant parentheses, quote style, quotes around property names and the
  * order of regex flags.
- * Literals compare by value. A text with syntax errors never matches.
+ * Literals compare by value, templates by raw text. A text with syntax errors never matches.
  */
 export function sameSyntax(a: string, b: string): boolean {
   const [x, y] = [a, b].map((text) =>
