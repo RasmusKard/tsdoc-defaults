@@ -16,8 +16,8 @@ export type Scope = {
   imports: Map<string, string>;
   /** Names of top-level declarations in the file, excluding ones a directive binds. */
   locals: Set<string>;
-  /** Import statements from `// tsdoc-defaults:` directives, verbatim and deduplicated. */
-  directives: string[];
+  /** Import statements from `// tsdoc-defaults:` directives, verbatim and deduplicated, with the names each binds. */
+  directives: { statement: string; names: string[] }[];
   /** Names a bare expression may read: imported, directive-bound or a known global. */
   known: Set<string>;
 };
@@ -40,18 +40,20 @@ export function scopeOf(sf: ts.SourceFile, fail: Fail): Scope {
       imports.set(s.name.text, s.getText(sf));
     else localNames(s).forEach((n) => locals.add(n));
   }
-  const directives: string[] = [];
+  const directives: Scope['directives'] = [];
   const known = new Set([...KNOWN_GLOBALS, ...imports.keys()]);
   for (const [pos, text] of directiveComments(sf)) {
-    const bindings = directiveBindings(text);
-    if (!bindings)
+    const names = directiveBindings(text);
+    if (!names) {
       fail(
         pos,
         'malformed directive: a tsdoc-defaults comment must be one import statement',
       );
-    else if (!directives.some((d) => sameStatement(d, text)))
-      directives.push(text);
-    bindings?.forEach((name) => {
+      continue;
+    }
+    if (!directives.some((d) => sameStatement(d.statement, text)))
+      directives.push({ statement: text, names });
+    names.forEach((name) => {
       known.add(name);
       imports.delete(name);
       locals.delete(name);
