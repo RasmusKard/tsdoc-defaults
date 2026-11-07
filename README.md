@@ -120,6 +120,7 @@ A code span is content in backticks; bare text is anything else.
 | `@default the temp directory` | nothing | skipped: prose |
 | `@default undefined` | nothing | skipped: no default |
 | `` @default `{ a:` `` | nothing | **error**: a code span must be one expression |
+| `` @default `{ a: 1 `` | nothing | **error**: a code span or fence must be closed; a word starting with `@` ends the tag, even inside a fence |
 
 ## TypeDoc
 

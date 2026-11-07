@@ -4,7 +4,7 @@ import ts from 'typescript';
 const FENCED = /^(`{3,})(?!`)[^\n]*\n([\s\S]*)\n([ \t]*)(`+)$/;
 
 export type Decl = ts.InterfaceDeclaration | ts.TypeAliasDeclaration;
-export type TagForm = 'code' | 'fence' | 'bare';
+export type TagForm = 'code' | 'fence' | 'unclosed' | 'bare';
 /** A default tag's form and the text that may be its expression. */
 export type ClassifiedTag = { form: TagForm; text: string };
 
@@ -20,16 +20,19 @@ export const tagText = (tag: ts.JSDocTag) =>
   (ts.getTextOfJSDocComment(tag.comment) ?? '').replace(/\r\n?/g, '\n').trim();
 
 /**
- * Classifies a tag's text as one code span, one fence (any info string, any indentation) or bare text,
- * and strips the delimiters.
+ * Classifies a tag's text as one code span, one fence (any info string, any indentation), a span or fence
+ * that is never closed, or bare text, and strips the delimiters.
  */
 export function classifyTag(text: string): ClassifiedTag {
   const fence = FENCED.exec(text);
   if (fence && fence[4].length >= fence[1].length)
     return { form: 'fence', text: dedent(fence[2], fence[3].length) };
+  const run = /^`+/.exec(text)?.[0];
+  // Neither a span nor a fence closes without a later run at least as long.
+  if (run && !text.slice(run.length).includes(run))
+    return { form: 'unclosed', text };
   // Markdown code span: a run of backticks, content without that run, one padding space each side stripped.
   // Not one regex: a backreference to the run backtracks quadratically on unclosed runs.
-  const run = /^`+/.exec(text)?.[0];
   const inner =
     run && text.length > 2 * run.length && text.endsWith(run)
       ? text.slice(run.length, -run.length)

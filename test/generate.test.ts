@@ -56,6 +56,8 @@ const LOCAL = (id: string) =>
   `\`${id}\` cannot reference a local declaration from a default; export it from another module or make it ambient`;
 const NOT_EXPORTED =
   'not exported; export it so the generated module can import its type';
+const UNCLOSED =
+  'the code span or fence in the default tag is not closed, or a word starting with @ ends the tag before it closes';
 const errors: Record<string, string[]> = {
   'directive.ts': [
     '1:1 malformed directive: a tsdoc-defaults comment must be one import statement',
@@ -91,11 +93,17 @@ const errors: Record<string, string[]> = {
   'reads-defaults.ts': [
     '4:7 Opts.timeoutMs: `DEFAULTS` clashes with the generated constant; import it under another name',
   ],
+  'unclosed.ts': [
+    `2:7 Opts.span: ${UNCLOSED}`,
+    `5:6 Opts.mention: ${UNCLOSED}`,
+    `12:6 Opts.model: ${UNCLOSED}`,
+  ],
   'unsupported.ts': [
     `2:7 ${UNSUPPORTED}`,
     `5:9 ${UNSUPPORTED}`,
     `11:7 ${UNSUPPORTED}`,
     `17:6 ${UNSUPPORTED}`,
+    `28:5 ${UNSUPPORTED}`,
   ],
 };
 
