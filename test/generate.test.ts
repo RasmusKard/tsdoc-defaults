@@ -67,9 +67,13 @@ const errors: Record<string, string[]> = {
   ],
   'generic.ts': ['1:1 Generic: generic declarations are not supported'],
   'local.ts': [
-    `8:7 Opts.a: ${LOCAL('LOCAL')}`,
-    `10:7 Opts.b: ${LOCAL('helper')}`,
-    `12:7 Opts.mode: ${LOCAL('Mode')}`,
+    `16:7 Opts.a: ${LOCAL('LOCAL')}`,
+    `18:7 Opts.b: ${LOCAL('helper')}`,
+    `20:7 Opts.mode: ${LOCAL('Mode')}`,
+    `22:7 Opts.c: ${LOCAL('Limits')}`,
+    ...['renamed', 'deep', 'rest', 'first', 'second', 'others'].map(
+      (id) => `24:7 Opts.d: ${LOCAL(id)}`,
+    ),
   ],
   'not-exported.ts': [
     `1:1 Hidden: ${NOT_EXPORTED}`,
