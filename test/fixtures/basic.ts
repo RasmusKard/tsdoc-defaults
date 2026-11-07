@@ -37,6 +37,16 @@ export interface IOSOptions extends BridgeOptions {
 export type Theme = {
   /** @default { dark: false } */
   palette?: { dark: boolean };
+  /**
+   * @default
+   * ```ts
+   * {
+   *   body: 'system-ui,\
+   *   sans-serif',
+   * }
+   * ```
+   */
+  font?: { body: string };
   /** @default none */
   border?: string;
   /** @default `start` or `end` */
