@@ -13,6 +13,7 @@ void test('formatting does not count', () => {
     ['const x = 0x10;', 'const x = 16;'],
     ['type T = Required<Pick<O, "a">>;', "type T = Required<Pick<O, ('a')>>"],
     ['const x = `a${ b }c`;', 'const x = `a${b}c`;'],
+    ['const x = /a/ig;', 'const x = /a/gi;'],
   ])
     assert.ok(sameSyntax(a, b), `${a} vs ${b}`);
 });
@@ -29,6 +30,7 @@ void test('code changes count', () => {
     ["const x = 'k';", 'const x = k;'],
     ['import type { A } from "a";', 'import { A } from "a";'],
     ['const x = `a`;', 'const x = `b`;'],
+    ['const x = /a/g;', 'const x = /a/gi;'],
     ['const x = 1;', 'const x = 1; const y = 2;'],
     ['const x = 1;', 'const x = ;'],
   ])
