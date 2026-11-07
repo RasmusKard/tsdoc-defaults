@@ -255,12 +255,19 @@ function isOrphan(file: string): boolean {
   return !!source && !fs.existsSync(path.join(path.dirname(file), source));
 }
 
+/** Whether generated `output` is left over once `source` has no code default: not if it names another existing source. */
+function isLeftover(output: string, source: string): boolean {
+  const named = headerSource(fs.readFileSync(output, 'utf8'));
+  return !named || named === path.basename(source) || isOrphan(output);
+}
+
 const isStale = (out: string, text: string) =>
   !fs.existsSync(out) || !sameSyntax(fs.readFileSync(out, 'utf8'), text);
 
 /**
  * Generates the module text for each source file, without writing anything.
- * A source with no code default gets no entry; its old generated module, if any, goes in `obsolete`.
+ * A source with no code default gets no entry; the generated module at its output path goes in `obsolete`
+ * unless that module's header names another source that still exists (`a.tsx` for `a.ts`).
  * A path named like a generated module (see `isOutput`) is not read as a source; it goes in `obsolete` if
  * tsdoc-defaults generated it and the source its header names no longer exists.
  * If any source has errors, `files` and `obsolete` are empty. Throws if a source file cannot be read.
@@ -285,7 +292,8 @@ export function generate(
     errors.push(...result.errors);
     const output = outputPath(source);
     if (!result.members.length) {
-      obsolete.push(output);
+      if (isGenerated(output) && isLeftover(output, source))
+        obsolete.push(output);
       continue;
     }
     const other = out.find((f) => f.output === output);
@@ -319,9 +327,7 @@ export function generate(
   const generated = new Set(out.map((f) => f.output));
   return {
     files: out,
-    obsolete: [...new Set(obsolete)].filter(
-      (f) => !generated.has(f) && isGenerated(f),
-    ),
+    obsolete: [...new Set(obsolete)].filter((f) => !generated.has(f)),
     errors,
   };
 }
