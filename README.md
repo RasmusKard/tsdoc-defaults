@@ -114,7 +114,7 @@ A code span is content in backticks; bare text is anything else.
 | --- | --- | --- |
 | `@default 10_000` or `` @default `10_000` `` | `10_000` | backticks are optional |
 | `` @default `os.tmpdir()` `` | `os.tmpdir()` | the file's `os` import is copied |
-| `// tsdoc-defaults: import os from 'node:os'`<br>`` @default `os.tmpdir()` `` | `os.tmpdir()` | if only the tag uses `os`, add this comment anywhere in the file |
+| `// tsdoc-defaults: import os from 'node:os'`<br>`` @default `os.tmpdir()` `` | `os.tmpdir()` | if only the tag uses `os`, or the file imports it with `import type`, add this comment anywhere in the file |
 | `` @default `process.env.PORT` `` | `process.env.PORT` | |
 | `@default process.env.PORT` | nothing | skipped: bare text can't be told from prose, so it may read only the file's imports and `undefined`, `NaN`, `Infinity`, `globalThis`; use a code span |
 | `@default the temp directory` | nothing | skipped: prose |
