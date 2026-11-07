@@ -1,5 +1,6 @@
 import { Foo, unused } from './foo';
 import * as foo from './foo';
+import type { Platform } from './platform';
 // tsdoc-defaults: import { Platform } from './platform'
 // tsdoc-defaults: import { Platform } from './platform';
 
@@ -19,6 +20,7 @@ export interface ImportOptions {
   retry?: { attempts: number; backoff: (n: number) => number };
   /** @default `Platform.OS === 'ios'` */
   bounces?: boolean;
+  os?: typeof Platform.OS;
   /** @default `(x: foo.Foo) => x` */
   identity?: (x: foo.Foo) => foo.Foo;
 }
