@@ -59,6 +59,14 @@ void test('text that is not one expression is prose, not an error', () => {
   assert.equal(defaultExpression("```ts\n'GET', 'HEAD'\n```"), undefined);
 });
 
+void test('an indented fence or one of more than three backticks holds an expression', () => {
+  assert.equal(
+    defaultExpression('```ts\n  {\n    a: 1,\n  }\n  ```'),
+    '{\n  a: 1,\n}',
+  );
+  assert.equal(defaultExpression('````ts\n1\n````'), '1');
+});
+
 void test('works on reflections from another TypeDoc copy', () => {
   let resolveBegin: (context: unknown) => void = () => {};
   const app = {
