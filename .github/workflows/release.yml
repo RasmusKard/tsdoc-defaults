@@ -1,12 +1,10 @@
 name: Release
 
-# Merging release-please's PR creates a draft release with an attested tarball; a maintainer publishes it to npm with 2FA
-# by running scripts/publish.sh X.Y.Z locally.
+# Merging release-please's PR creates a draft release, attests the tarball, publishes it to npm with trusted publishing
+# and then un-drafts the release.
 on:
   push:
     branches: [main]
-  # Checks that npm's trusted publishing accepts this repo's OIDC token (npm/cli#9969) without publishing.
-  workflow_dispatch:
 
 permissions: {}
 
@@ -16,7 +14,6 @@ concurrency:
 
 jobs:
   release-please:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     # Holds the App key; limited to main.
     environment: release
@@ -87,23 +84,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag }}
 
-  oidc-check:
-    if: github.event_name == 'workflow_dispatch'
+  # Holds the npm OIDC token, so it runs no repository or dependency code.
+  publish:
+    needs: [release-please, attest]
     runs-on: ubuntu-latest
     # npm's trusted publisher entry names this environment.
     environment: release
     permissions:
       id-token: write
-      contents: read
+      contents: write
     steps:
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24
           package-manager-cache: false
-      # A tarball runs no lifecycle scripts, and 1.0.2 is already on npm, so nothing can be published.
-      - run: |
-          gh release download v1.0.2 -p '*.tgz' -R "$GITHUB_REPOSITORY"
-          npm publish tsdoc-defaults-1.0.2.tgz --dry-run --loglevel verbose 2>&1 | tee publish.log || true
-          grep -q 'oidc Successfully retrieved and set token' publish.log
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: package
+      # A tarball runs no lifecycle scripts.
+      - run: npm publish tsdoc-defaults-*.tgz
+      - run: gh release edit "$TAG" --draft=false -R "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag }}
