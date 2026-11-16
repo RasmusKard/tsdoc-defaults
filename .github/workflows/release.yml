@@ -5,6 +5,8 @@ name: Release
 on:
   push:
     branches: [main]
+  # Checks that npm's trusted publishing accepts this repo's OIDC token (npm/cli#9969) without publishing.
+  workflow_dispatch:
 
 permissions: {}
 
@@ -14,6 +16,7 @@ concurrency:
 
 jobs:
   release-please:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     # Holds the App key; limited to main.
     environment: release
@@ -83,3 +86,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag }}
+
+  oidc-check:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # npm's trusted publisher entry names this environment.
+    environment: release
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      # A tarball runs no lifecycle scripts, and 1.0.2 is already on npm, so nothing can be published.
+      - run: |
+          gh release download v1.0.2 -p '*.tgz' -R "$GITHUB_REPOSITORY"
+          npm publish tsdoc-defaults-1.0.2.tgz --dry-run --loglevel verbose 2>&1 | tee publish.log || true
+          grep -q 'oidc Successfully retrieved and set token' publish.log
+        env:
+          GH_TOKEN: ${{ github.token }}
