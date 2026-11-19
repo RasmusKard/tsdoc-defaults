@@ -132,7 +132,7 @@ Requires `typedoc@^0.28` (optional peer dependency).
 
 - A default that is one expression renders in the signature: `timeoutMs?: number = 10_000`.
 - Prose stays a "Default" block.
-- So does bare text that reads an imported name (`@default DEFAULT_TIMEOUT`). Write it as a code span to get it in the signature.
+- So does bare text or a fence that reads an imported name (`@default DEFAULT_TIMEOUT`): TypeDoc wraps bare text in a fence, so the two look the same. Write it as a code span to get it in the signature.
 
 ## Limits
 
