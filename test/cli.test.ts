@@ -43,6 +43,13 @@ void test('usage', () => {
   assert.match(help.out, /^usage: /);
   assert.equal(cli('--bogus', 'x.ts').code, 2);
   assert.equal(cli(path.join(tmp(), '*.ts')).code, 2);
+  const typo = cli(
+    'test/fixtures/basic.ts',
+    'test/fixtures/typo.ts',
+    '--check',
+  );
+  assert.equal(typo.code, 2);
+  assert.match(typo.out, /no files match test\/fixtures\/typo\.ts/);
   assert.equal(cliIn(tmp()).code, 2);
 });
 

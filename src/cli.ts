@@ -38,16 +38,20 @@ function main(argv: string[]): number {
     console.error(messages.map((m) => `${config.path}: ${m}`).join('\n'));
     return 2;
   }
+  const matches = args.positionals.map(filesOf);
+  const unmatched = args.positionals.find((_, i) => !matches[i].length);
+  if (unmatched !== undefined) {
+    console.error(`no files match ${unmatched}`);
+    return 2;
+  }
   const files = args.positionals.length
-    ? filesOf(args.positionals)
+    ? [...new Set(matches.flat())].sort()
     : (config?.files ?? []).sort();
   if (!files.length) {
     console.error(
-      args.positionals.length
-        ? 'no files match'
-        : config
-          ? `${config.path} includes no TypeScript files: pass globs`
-          : USAGE,
+      config
+        ? `${config.path} includes no TypeScript files: pass globs`
+        : USAGE,
     );
     return 2;
   }
@@ -68,13 +72,9 @@ function main(argv: string[]): number {
 const isFile = (f: string) =>
   !!fs.statSync(f, { throwIfNoEntry: false })?.isFile();
 
-/** The files the arguments name, sorted: an argument naming a file is used as is, any other is a glob; directories are skipped. */
-function filesOf(args: string[]): string[] {
-  const files = args.flatMap((a) =>
-    isFile(a) ? [path.normalize(a)] : fs.globSync(a).filter(isFile),
-  );
-  return [...new Set(files)].sort();
-}
+/** The files an argument names: a file as is, otherwise the files the glob matches; directories are skipped. */
+const filesOf = (arg: string) =>
+  isFile(arg) ? [path.normalize(arg)] : fs.globSync(arg).filter(isFile);
 
 function readConfig(project?: string) {
   if (!project && !fs.existsSync(CONFIG)) return undefined;
