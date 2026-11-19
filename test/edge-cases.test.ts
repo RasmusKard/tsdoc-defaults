@@ -94,6 +94,18 @@ void test('a directive is a real line comment, not a mention in a string, templa
   ]);
 });
 
+void test('a name the expression declares is not a read of the file', () => {
+  const r = extract([
+    'const ms = 5;',
+    'type T = 1;',
+    'export interface Opts {',
+    '  /** @default `(() => { const ms = 1; function f() {} class C {} return ms; })()` */ a?: number;',
+    '  /** @default `(<T,>(x: T) => x)(1)` */ b?: number;',
+    '}',
+  ]);
+  assert.equal(r.members.length, 2);
+});
+
 void test('a directive is copied only if a default reads a name it binds, or it binds none', () => {
   const r = extract([
     "// tsdoc-defaults: import { join } from 'node:path'",

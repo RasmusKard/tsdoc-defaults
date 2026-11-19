@@ -257,7 +257,10 @@ function isDeclaration(n: ts.Identifier): boolean {
   return (
     ts.isParameter(p) ||
     ts.isBindingElement(p) ||
+    ts.isVariableDeclaration(p) ||
+    ts.isTypeParameterDeclaration(p) ||
+    ts.isFunctionDeclaration(p) ||
     ts.isFunctionExpression(p) ||
-    ts.isClassExpression(p)
+    ts.isClassLike(p)
   );
 }
