@@ -9,6 +9,8 @@ void test('formatting does not count', () => {
     ["const x = { 'k': 1, 2: 0 };", "const x = { k: 1, '2': 0 };"],
     ['const x = (1);', 'const x = 1;'],
     ['const x = a && b || c;', 'const x = (a && b) || c;'],
+    ['const x = a || (b || c);', 'const x = a || b || c;'],
+    ['const x = a ?? (b ?? (c ?? d));', 'const x = (a ?? b) ?? c ?? d;'],
     ['const f = (x) => x;', 'const f = x => x;'],
     ['const x = 0x10;', 'const x = 16;'],
     ['type T = Required<Pick<O, "a">>;', "type T = Required<Pick<O, ('a')>>"],

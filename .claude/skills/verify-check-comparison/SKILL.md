@@ -36,7 +36,7 @@ VERIFY_RUNS=50000 npm run verify
 
 ## Read the result
 
-- **Pass**: both property tests show `✔`. The `todo` test that fails is the open finding below; it is expected and does not fail the run.
+- **Pass**: both property tests show `✔`.
 - **`Property failed`**: the output holds `Counterexample` (the generated tree, as JSON), the `seed` and `path`, and in `[cause]` the two module texts. The first property prints `--- on disk` and `--- regenerated` with both `DEFAULTS` printouts as `+ actual`/`- expected`. The second prints `generated:` and `--- after prettier {options}:`. fast-check has already shrunk the case, so read the module texts, not the JSON.
 - **`only N runs compared differently spelled modules as the same`**: the generator, not the product. Too few cases reached the "same" branch for the first property to mean anything. Look at what the last change to the harness or to `renderModule` did to the printed texts.
 
@@ -47,21 +47,10 @@ It is a **real bug** when both texts are valid JavaScript that tsdoc-defaults co
 It is a **modeling error** when the counterexample depends on something the harness should have filtered out. The harness already skips these cases:
 
 - Texts that are not valid JavaScript (`0 ?? 1 || 2`, `++0`, `-1 as number ** 2`). The TypeScript parser accepts them and leaves them to the type checker. `evaluate` returns undefined for them.
-- Inputs that Prettier rejects (`{ a: 0, f() }`) or that it breaks (it moves a `// c` into a string ending a line with `\`).
+- Inputs that Prettier rejects (`{ a: 0, f() }`) or that it breaks (it moves a `// c` into a string ending a line with `\`, or writes `(<number>0) ** 0` as the syntax error `<number>0 ** 0`).
 - Values that are not deterministic. `new Date()` was dropped from the grammar for that reason.
 
 A new failure of that kind means a filter or the grammar needs fixing in the harness, with a one-line comment saying why. Never weaken a property to make a real counterexample pass. Report it as a finding instead, and pin it the way the open finding below is pinned.
-
-## Open finding
-
-**Prettier's reassociated `&&`, `||` and `??` chains count as stale.** Prettier rewrites `a || (b || c)` as `a || b || c`, which parses as `(a || b) || c`. The value and evaluation order are the same, but the trees differ, so `sameSyntax` reports a difference. Steps:
-
-1. A tag reads `` @default `process.env.HOST || (process.env.HOSTNAME || 'localhost')` ``.
-2. `tsdoc-defaults` writes `host: process.env.HOST || (process.env.HOSTNAME || 'localhost')`.
-3. Prettier formats the generated file to `host: process.env.HOST || process.env.HOSTNAME || 'localhost'`.
-4. `tsdoc-defaults --check` reports the file stale. Regenerating and formatting again brings the parentheses back and then drops them again, so CI never passes.
-
-The harness keeps the finding visible as the todo test `finding: --check calls a file stale once Prettier drops the parentheses in ...`. The second property skips only failures whose text contains such a right-nested chain (`hasRightNestedLogical`), so any other Prettier failure still fails the run. When src/compare.ts is fixed, the todo test passes. Then delete its `todo` option and the `hasRightNestedLogical` skip.
 
 ## Scope and bounds
 

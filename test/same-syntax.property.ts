@@ -8,7 +8,7 @@ import fc from 'fast-check';
 import * as prettier from 'prettier';
 import ts from 'typescript';
 import { sameSyntax } from '../src/compare.js';
-import { parseDefault } from '../src/expressions.js';
+import { parseDefault, parseDiagnostics } from '../src/expressions.js';
 import { renderModule } from '../src/render.js';
 
 // A default's value, generated as a tree and printed with random spellings (see `Printer`).
@@ -541,7 +541,8 @@ void test('--check ignores what Prettier changes in a generated file', async () 
       const before = text === undefined ? undefined : evaluate(text);
       fc.pre(text !== undefined && before !== undefined);
       // Prettier rejects some texts TypeScript parses (`{ a: 0, f() }`) and breaks others (it moves a `// c` into
-      // a string that ends a line with `\`); neither says anything about sameSyntax, so both are skipped.
+      // a string that ends a line with `\`, or writes `(<number>0) ** 0` as `<number>0 ** 0`, a syntax error); neither
+      // says anything about sameSyntax, so both are skipped.
       const formatted = await prettier
         .format(text, { ...opts, parser: 'typescript' })
         .catch((e: unknown) => {
@@ -549,57 +550,18 @@ void test('--check ignores what Prettier changes in a generated file', async () 
           if (e instanceof Error && e.name === 'SyntaxError') return undefined;
           throw e;
         });
-      fc.pre(formatted !== undefined && evaluate(formatted) === before);
-      const same = sameSyntax(text, formatted);
-      // The known finding (the todo test below) is skipped only here, so any other failure still shows.
-      fc.pre(same || !hasRightNestedLogical(text));
+      fc.pre(
+        formatted !== undefined &&
+          !parseDiagnostics(
+            ts.createSourceFile('x.ts', formatted, ts.ScriptTarget.Latest),
+          ).length &&
+          evaluate(formatted) === before,
+      );
       assert.ok(
-        same,
+        sameSyntax(text, formatted),
         `generated:\n${text}\n--- after prettier ${JSON.stringify(opts)}:\n${formatted}`,
       );
     }),
     { numRuns: Math.ceil(RUNS / 6) },
   );
 });
-
-const LOGICAL = [
-  ts.SyntaxKind.AmpersandAmpersandToken,
-  ts.SyntaxKind.BarBarToken,
-  ts.SyntaxKind.QuestionQuestionToken,
-];
-
-/** Whether `text` has `a OP (b OP c)` for `&&`, `||` or `??`: Prettier drops those parentheses. */
-function hasRightNestedLogical(text: string): boolean {
-  let found = false;
-  const visit = (n: ts.Node): void => {
-    if (ts.isBinaryExpression(n) && LOGICAL.includes(n.operatorToken.kind)) {
-      let r = n.right;
-      while (ts.isParenthesizedExpression(r)) r = r.expression;
-      found ||=
-        ts.isBinaryExpression(r) &&
-        r.operatorToken.kind === n.operatorToken.kind;
-    }
-    n.forEachChild(visit);
-  };
-  visit(ts.createSourceFile('x.ts', text, ts.ScriptTarget.Latest, true));
-  return found;
-}
-
-void test(
-  'finding: --check calls a file stale once Prettier drops the parentheses in `a || (b || c)`',
-  {
-    todo: 'open finding in src/compare.ts; drop this todo and the skip above once it passes',
-  },
-  async () => {
-    for (const op of ['&&', '||', '??']) {
-      const text = moduleFor([
-        [
-          'host',
-          `process.env.HOST ${op} (process.env.HOSTNAME ${op} 'localhost')`,
-        ],
-      ])!;
-      const formatted = await prettier.format(text, { parser: 'typescript' });
-      assert.ok(sameSyntax(text, formatted), formatted);
-    }
-  },
-);
