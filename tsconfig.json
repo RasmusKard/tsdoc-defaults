@@ -7,5 +7,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["src", "test/**/*.test.ts", "example"]
+  "include": ["src", "test/**/*.test.ts", "test/**/*.property.ts", "example"]
 }
