@@ -38,8 +38,28 @@ function textOf(n: ts.Node): unknown {
   return n.text.slice(0, flags) + [...n.text.slice(flags)].sort().join('');
 }
 
+const LOGICAL = [
+  ts.SyntaxKind.AmpersandAmpersandToken,
+  ts.SyntaxKind.BarBarToken,
+  ts.SyntaxKind.QuestionQuestionToken,
+];
+
+/** The operands of a chain of one operator, so `a || (b || c)` and `a || b || c` (Prettier's) match. */
+const operands = (n: ts.Node, op: ts.SyntaxKind): ts.Node[] =>
+  ts.isBinaryExpression(n) && n.operatorToken.kind === op
+    ? [...operands(unwrap(n.left), op), ...operands(unwrap(n.right), op)]
+    : [n];
+
 /** Each child with the property of `n` that holds it, so an absent optional child does not shift the next. */
 function children(n: ts.Node): [string | undefined, ts.Node][] {
+  if (ts.isBinaryExpression(n) && LOGICAL.includes(n.operatorToken.kind))
+    return [
+      ['operatorToken', n.operatorToken],
+      ...operands(n, n.operatorToken.kind).map((c): [string, ts.Node] => [
+        'operand',
+        c,
+      ]),
+    ];
   const props = Object.entries(n);
   const out: [string | undefined, ts.Node][] = [];
   // A block body: `forEachChild` stops at the first truthy return.
@@ -77,8 +97,8 @@ function sameNode(a: ts.Node, b: ts.Node): boolean {
 
 /**
  * Whether two module texts have the same syntax tree, ignoring what a formatter changes: whitespace,
- * comments, semicolons, trailing commas, redundant parentheses, quote style, quotes around property names and the
- * order of regex flags.
+ * comments, semicolons, trailing commas, redundant parentheses, the grouping of a `&&`, `||` or `??` chain, quote
+ * style, quotes around property names and the order of regex flags.
  * Literals compare by value, templates by raw text. A text with syntax errors never matches.
  */
 export function sameSyntax(a: string, b: string): boolean {
