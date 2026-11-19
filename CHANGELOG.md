@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.3](https://github.com/RasmusKard/tsdoc-defaults/compare/v1.0.2...v1.0.3) (2026-11-19)
+
+
+### Bug Fixes
+
+* Accept Prettier's regrouped &&, || and ?? chains in --check ([#49](https://github.com/RasmusKard/tsdoc-defaults/issues/49)) ([8239e4f](https://github.com/RasmusKard/tsdoc-defaults/commit/8239e4f50d9dbaab54c38ad5b3b907be7896687b))
+* Fail when any file or glob argument matches nothing ([#51](https://github.com/RasmusKard/tsdoc-defaults/issues/51)) ([9b1f1df](https://github.com/RasmusKard/tsdoc-defaults/commit/9b1f1dfd7f86198922695ce6508f88d107308b2b))
+* Stop treating names a default declares as reads of local declarations ([#50](https://github.com/RasmusKard/tsdoc-defaults/issues/50)) ([6cabb06](https://github.com/RasmusKard/tsdoc-defaults/commit/6cabb068f678c3c3388adecbea547fff0ee61a04))
+
 ## [1.0.2](https://github.com/RasmusKard/tsdoc-defaults/compare/v1.0.1...v1.0.2) (2026-11-07)
 
 

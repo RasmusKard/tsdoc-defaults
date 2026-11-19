@@ -1,6 +1,6 @@
 {
   "name": "tsdoc-defaults",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Generate typed runtime defaults from @default/@defaultValue TSDoc tags",
   "keywords": [
     "typescript",
