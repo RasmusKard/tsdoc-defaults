@@ -25,5 +25,4 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run typecheck
       - run: pnpm run test
-      # Builds the package first.
       - run: pnpm run docs
