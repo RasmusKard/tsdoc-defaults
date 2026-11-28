@@ -1,5 +1,3 @@
-// Property-based verification of `sameSyntax`, the comparison behind `--check`. Run: npm run verify.
-// The skill in .claude/skills/verify-check-comparison/SKILL.md explains the properties and how to read a failure.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { inspect } from 'node:util';
