@@ -12,26 +12,26 @@ description: Check a tsdoc-defaults change against the two promises of `--check`
 | **Fresh means same value**: `--check never calls a file fresh when its DEFAULTS would differ`. If `sameSyntax(onDisk, regenerated)` is true, both modules load to the same `DEFAULTS` (compared with `util.inspect`, so key order, prototypes, `-0`, holes and thrown errors count). | CI passes while the committed file holds an old default, so the code silently runs with a value the docs no longer state. |
 | **Prettier doesn't count**: `--check ignores what Prettier changes in a generated file`. A generated module and Prettier's output for it (random `singleQuote`, `quoteProps`, `trailingComma`, `semi`, `bracketSpacing`, `objectWrap`, `arrowParens`, `printWidth`) compare the same. | The README says Prettier may run on generated files; if it can't, `--check` fails CI on every run with no tag edited. |
 
-The harness is [test/same-syntax.property.ts](../../../test/same-syntax.property.ts). `npm test` does not run it.
+The harness is [test/same-syntax.property.ts](../../../test/same-syntax.property.ts). `pnpm test` does not run it.
 
 ## Does the change touch the verified code?
 
-Run the check if the diff touches any file in the coverage record below, or `typescript`/`prettier` in package-lock.json. List what changed since the record was last confirmed:
+Run the check if the diff touches any file in the coverage record below, or `typescript`/`prettier` in pnpm-lock.yaml. List what changed since the record was last confirmed:
 
 ```sh
-git diff --stat 3b75eb8..HEAD -- src/compare.ts src/render.ts src/expressions.ts src/index.ts package-lock.json
+git diff --stat 3b75eb8..HEAD -- src/compare.ts src/render.ts src/expressions.ts src/index.ts pnpm-lock.yaml
 ```
 
 ## Run
 
 ```sh
-npm run verify
+pnpm run verify
 ```
 
 It runs 10,000 cases for the first property and a sixth as many for the second. Each run draws new random cases. For a deeper sweep before a release or after changing src/compare.ts, set `VERIFY_RUNS`:
 
 ```sh
-VERIFY_RUNS=50000 npm run verify
+VERIFY_RUNS=50000 pnpm run verify
 ```
 
 ## Read the result
@@ -42,7 +42,7 @@ VERIFY_RUNS=50000 npm run verify
 
 ### Real bug or modeling error?
 
-It is a **real bug** when both texts are valid JavaScript that tsdoc-defaults could have written, `sameSyntax` calls them the same, and they load to different `DEFAULTS`, or when Prettier kept the meaning and `sameSyntax` calls the texts different. To confirm one, add the two texts as a pair in test/compare.test.ts (`code changes count` or `formatting does not count`) and run `npm test`. That gives a reproducer that runs on every change without the generator.
+It is a **real bug** when both texts are valid JavaScript that tsdoc-defaults could have written, `sameSyntax` calls them the same, and they load to different `DEFAULTS`, or when Prettier kept the meaning and `sameSyntax` calls the texts different. To confirm one, add the two texts as a pair in test/compare.test.ts (`code changes count` or `formatting does not count`) and run `pnpm test`. That gives a reproducer that runs on every change without the generator.
 
 It is a **modeling error** when the counterexample depends on something the harness should have filtered out. The harness already skips these cases:
 
@@ -69,12 +69,12 @@ The check is random sampling over that grammar, not a proof: a pass means no cou
 
 - Functions, classes and arrow functions, whose values can't be compared by loading them, and free identifiers other than the globals above, imports and `// tsdoc-defaults:` directive lines.
 - Type-only differences (`as number` vs `as string`). Loading the module erases types, so the first property can't see them.
-- Everything around the comparison in `check`: missing, obsolete or header-less files (src/index.ts), how tags become expressions (src/tags.ts, `extractDefaults`), and the CLI. For those, see [verify-cli](../verify-cli/SKILL.md) and `npm test`.
-- Prettier options not listed above, and Prettier versions other than the one in package-lock.json.
+- Everything around the comparison in `check`: missing, obsolete or header-less files (src/index.ts), how tags become expressions (src/tags.ts, `extractDefaults`), and the CLI. For those, see [verify-cli](../verify-cli/SKILL.md) and `pnpm test`.
+- Prettier options not listed above, and Prettier versions other than the one in pnpm-lock.yaml.
 
 ## Keep it in step with the code
 
-When a change to the covered code is intended (a new form the comparison ignores, a new kind of generated content), update the harness in the same change. Add the new syntax to the grammar (`expr` in the `fc.letrec`) and its spellings to `Printer`, then show that the check can still fail. Break the code the change added, for example by removing the new case, run `npm run verify`, see `✖`, and revert. These breaks of src/compare.ts are known to be caught. Use them to confirm the harness still has teeth after editing it:
+When a change to the covered code is intended (a new form the comparison ignores, a new kind of generated content), update the harness in the same change. Add the new syntax to the grammar (`expr` in the `fc.letrec`) and its spellings to `Printer`, then show that the check can still fail. Break the code the change added, for example by removing the new case, run `pnpm run verify`, see `✖`, and revert. These breaks of src/compare.ts are known to be caught. Use them to confirm the harness still has teeth after editing it:
 
 | Break | Caught by |
 | --- | --- |
@@ -92,4 +92,4 @@ When a change to the covered code is intended (a new form the comparison ignores
 | Both properties (input path) | src/render.ts: `renderModule`, `renderMember`; src/expressions.ts: `parseDefault`, `parseExpression`, `parseDiagnostics` |
 | Fresh means same value (caller) | src/index.ts: `isStale`, `check` (the call `sameSyntax(disk, regenerated)`) |
 
-**Sync commit: `3b75eb8`.** The verification was last confirmed to describe the covered code at that commit. Move it forward only after you have read the covered functions at the new commit, confirmed the grammar and properties still match them, run `npm run verify`, and seen a break from the table above fail.
+**Sync commit: `3b75eb8`.** The verification was last confirmed to describe the covered code at that commit. Move it forward only after you have read the covered functions at the new commit, confirmed the grammar and properties still match them, run `pnpm run verify`, and seen a break from the table above fail.

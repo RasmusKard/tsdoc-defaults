@@ -58,7 +58,7 @@ EOF
 case ${1:-} in
 launch)
   [[ -e $WORK ]] && { echo "already launched: $WORK" >&2; exit 1; }
-  (cd "$REPO" && npm run build --silent)
+  (cd "$REPO" && pnpm --silent run build)
   seed
   mkdir -p "$EVIDENCE"
   git -C "$REPO" rev-parse HEAD >"$EVIDENCE/commit.txt"

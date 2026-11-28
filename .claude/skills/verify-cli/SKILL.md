@@ -5,7 +5,7 @@ description: Prove a tsdoc-defaults change works the way a consumer sees it, by 
 
 # Verify tsdoc-defaults as a consumer
 
-The product is a CLI, `tsdoc-defaults`, plus the module it generates and a TypeDoc plugin. A consumer touches three things: the command's exit code and messages, the `<name>.defaults.ts` file it writes, and `tsc`/`node`/`typedoc` running over that file. Unit tests (`npm test`) call the source through `tsx`; this skill drives the **built** `dist/` from a separate project, the way an installed package runs.
+The product is a CLI, `tsdoc-defaults`, plus the module it generates and a TypeDoc plugin. A consumer touches three things: the command's exit code and messages, the `<name>.defaults.ts` file it writes, and `tsc`/`node`/`typedoc` running over that file. Unit tests (`pnpm test`) call the source through `tsx`; this skill drives the **built** `dist/` from a separate project, the way an installed package runs.
 
 Everything goes through [`verify.sh`](verify.sh), run from the repo root. Each run has an ID; every command needs it.
 
@@ -19,7 +19,7 @@ export RUN_ID=$(date +%Y%m%d-%H%M%S) V=.claude/skills/verify-cli/verify.sh
 $V launch
 ```
 
-Builds `dist/` (`npm run build`), then creates the consumer project at `$TMPDIR/tsdoc-defaults-verify-$RUN_ID`:
+Builds `dist/` (`pnpm run build`), then creates the consumer project at `$TMPDIR/tsdoc-defaults-verify-$RUN_ID`:
 
 - `package.json` (`"type": "module"`), `tsconfig.json` (`module: nodenext`, so generated imports end in `.js`).
 - `src/options.ts`: `ClientOptions` with `timeoutMs` (`` @default `10_000` ``), `retries` (`@defaultValue 3`), `cacheDir` (`` @default `os.tmpdir()` `` with a `// tsdoc-defaults: import` directive) and `baseUrl` (prose default).
@@ -34,7 +34,7 @@ Ready when it prints `ready: project …, evidence …`. Launch refuses an ID th
 $V doctor
 ```
 
-Read-only. Prints `OK` and exits 0 only when the project exists, `dist/cli.js` is newer than every `src/*.ts`, and `tsdoc-defaults --help` prints the usage line. It also prints the repo commit and package version. Run it first, and again whenever a result looks wrong: a stale `dist/` is the usual cause. Fix by rerunning `npm run build`.
+Read-only. Prints `OK` and exits 0 only when the project exists, `dist/cli.js` is newer than every `src/*.ts`, and `tsdoc-defaults --help` prints the usage line. It also prints the repo commit and package version. Run it first, and again whenever a result looks wrong: a stale `dist/` is the usual cause. Fix by rerunning `pnpm run build`.
 
 ## Drive
 
@@ -52,7 +52,7 @@ The feature recipes are in [`features/`](features/README.md). Each lists every u
 
 Evidence lives in `.scratch/verify/$RUN_ID/` (gitignored): `commit.txt` (HEAD and dirty files at launch) and one record per `run`. A proof:
 
-- Drives the user path: the `tsdoc-defaults` command, `tsc`, `node`, `typedoc` over the project. Never calls `generate`/`check` from `src/` directly; that's what `npm test` does.
+- Drives the user path: the `tsdoc-defaults` command, `tsc`, `node`, `typedoc` over the project. Never calls `generate`/`check` from `src/` directly; that's what `pnpm test` does.
 - Captures before and after: the command that changes state, then a second command that reads it (`--check`, `tsc`, `node`, the HTML). An exit code 0 alone proves nothing about the file.
 - Checks side effects on disk: which files exist after the run, not only what was printed. An error run must leave the file list unchanged.
 - Uses no mocks. Everything runs locally; nothing touches the network.
@@ -65,4 +65,4 @@ Report each feature ID with the label of the record that proves it.
 $V cleanup
 ```
 
-Removes only `$TMPDIR/tsdoc-defaults-verify-$RUN_ID`. Evidence in `.scratch/verify/$RUN_ID/` stays. `dist/` stays too (it's gitignored and the next `npm run build` replaces it). Run cleanup after every run, failed ones included.
+Removes only `$TMPDIR/tsdoc-defaults-verify-$RUN_ID`. Evidence in `.scratch/verify/$RUN_ID/` stays. `dist/` stays too (it's gitignored and the next `pnpm run build` replaces it). Run cleanup after every run, failed ones included.

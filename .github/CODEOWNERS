@@ -1,4 +1,4 @@
 /.github/ @RasmusKard
 /package.json @RasmusKard
-/package-lock.json @RasmusKard
-/.npmrc @RasmusKard
+/pnpm-lock.yaml @RasmusKard
+/pnpm-workspace.yaml @RasmusKard

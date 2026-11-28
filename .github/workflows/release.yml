@@ -49,6 +49,7 @@ jobs:
         with:
           ref: ${{ needs.release-please.outputs.tag }}
           persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.1
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: 24
@@ -57,9 +58,9 @@ jobs:
       - run: test "v$(node -p 'require("./package.json").version')" = "$TAG"
         env:
           TAG: ${{ needs.release-please.outputs.tag }}
-      - run: npm ci --ignore-scripts
-      - run: npm run check
-      - run: npm run build
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm run check
+      - run: pnpm run build
       - run: npm pack
       - uses: actions/upload-artifact@v7.0.2
         with:

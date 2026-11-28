@@ -1,5 +1,5 @@
 test/fixtures
 *.md
-package-lock.json
+pnpm-lock.yaml
 .claude
 .github/.release-please-manifest.json
